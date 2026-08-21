@@ -1,0 +1,1647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STACKD Live Kitchen & Stock POS</title>
+    <!-- Firebase Realtime SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-canvas: #f1f5f9;
+            --card-surface: #ffffff;
+            --text-primary: #0f172a;
+            --text-muted: #64748b;
+            --brand-primary: #4f46e5;
+            --brand-primary-hover: #4338ca;
+            --accent-emerald: #10b981;
+            --accent-rose: #f43f5e;
+            --accent-rose-soft: #fff1f2;
+            --accent-amber: #f59e0b;
+            --accent-amber-soft: #fffdf5;
+            --border-light: #cbd5e1;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-canvas);
+            color: var(--text-primary);
+            padding: 16px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1240px;
+            margin: 0 auto;
+        }
+
+        /* Header Navigation */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            background: var(--card-surface);
+            padding: 14px 20px;
+            border-radius: 16px;
+            border: 1px solid var(--border-light);
+            margin-bottom: 16px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+        }
+
+        .brand-block {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-badge {
+            background: #0f172a;
+            color: #facc15;
+            font-weight: 900;
+            font-size: 1.15rem;
+            padding: 6px 14px;
+            border-radius: 10px;
+            letter-spacing: 1.5px;
+        }
+
+        .header-title h1 {
+            font-size: 1.35rem;
+            font-weight: 800;
+        }
+
+        .live-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: var(--accent-emerald);
+            background: #ecfdf5;
+            padding: 2px 8px;
+            border-radius: 12px;
+            border: 1px solid #a7f3d0;
+            margin-top: 2px;
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-emerald);
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn-nav {
+            background: #e2e8f0;
+            color: var(--text-primary);
+            border: 1px solid var(--border-light);
+            padding: 9px 16px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+
+        .btn-nav.active {
+            background: var(--brand-primary);
+            color: #ffffff;
+            border-color: var(--brand-primary);
+        }
+
+        .tab-view {
+            display: none;
+        }
+
+        .tab-view.active {
+            display: block;
+        }
+
+        /* Shift Bar */
+        .shift-bar {
+            background: var(--card-surface);
+            border: 1px solid var(--border-light);
+            border-radius: 14px;
+            padding: 12px 18px;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .shift-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .date-picker-input {
+            background: #f8fafc;
+            border: 1px solid var(--border-light);
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .btn-today {
+            background: #e0e7ff;
+            color: var(--brand-primary);
+            border: none;
+            padding: 7px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        /* Rider Payout Card */
+        .rider-payout-card {
+            background: #ffffff;
+            border: 2px solid #e0e7ff;
+            border-radius: 16px;
+            padding: 16px 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 10px rgba(79, 70, 229, 0.04);
+        }
+
+        .rider-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .rider-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: #1e1b4b;
+        }
+
+        .payout-total-badge {
+            background: linear-gradient(135deg, #4f46e5, #4338ca);
+            color: #ffffff;
+            padding: 8px 18px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 900;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 10px rgba(79, 70, 229, 0.25);
+        }
+
+        .rider-controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+            align-items: center;
+        }
+
+        .delivery-btn-card {
+            background: #f8fafc;
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .delivery-tier-label {
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+
+        .delivery-tier-sub {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--text-muted);
+        }
+
+        .delivery-counter-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-del-count {
+            background: #ffffff;
+            border: 1px solid var(--border-light);
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 800;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.1s;
+        }
+
+        .btn-del-count:active {
+            background: var(--brand-primary);
+            color: #ffffff;
+        }
+
+        .del-count-val {
+            font-size: 1.15rem;
+            font-weight: 900;
+            color: var(--brand-primary);
+            min-width: 26px;
+            text-align: center;
+        }
+
+        .custom-delivery-box {
+            display: flex;
+            gap: 6px;
+            background: #f8fafc;
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 8px 12px;
+            align-items: center;
+        }
+
+        .input-custom-rs {
+            width: 85px;
+            background: #ffffff;
+            border: 1px solid var(--border-light);
+            padding: 6px 8px;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            font-weight: 700;
+            text-align: center;
+            outline: none;
+        }
+
+        .btn-add-custom {
+            background: var(--brand-primary);
+            color: #ffffff;
+            border: none;
+            padding: 7px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 800;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        /* KPI Banner */
+        .kpi-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .kpi-card {
+            background: var(--card-surface);
+            border: 1px solid var(--border-light);
+            border-radius: 14px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .kpi-card span {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .kpi-card strong {
+            font-size: 1.4rem;
+            font-weight: 800;
+        }
+
+        .btn-shopping-alert {
+            background: #fff7ed;
+            border: 1px solid #fdba74;
+            color: #c2410c;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: 0.15s;
+        }
+
+        .btn-shopping-alert:hover {
+            background: #ffedd5;
+        }
+
+        /* Category Filter Tabs */
+        .category-tab-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            margin-bottom: 14px;
+        }
+
+        .category-tab-btn {
+            background: var(--card-surface);
+            border: 1px solid var(--border-light);
+            padding: 10px 16px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 800;
+            color: var(--text-muted);
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .category-tab-btn.active {
+            background: #0f172a;
+            color: #facc15;
+            border-color: #0f172a;
+        }
+
+        /* Item Creator Section */
+        .creator-box {
+            background: var(--card-surface);
+            border: 1px solid var(--border-light);
+            border-radius: 14px;
+            padding: 14px 18px;
+            margin-bottom: 16px;
+        }
+
+        .creator-header {
+            font-size: 0.8rem;
+            font-weight: 800;
+            color: var(--brand-primary);
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .creator-grid {
+            display: grid;
+            grid-template-columns: 140px 130px 1.5fr 1fr 1fr 1fr auto;
+            gap: 8px;
+            align-items: center;
+        }
+
+        @media (max-width: 900px) {
+            .creator-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .creator-grid button {
+                grid-column: span 2;
+            }
+        }
+
+        .input-field {
+            background: #f8fafc;
+            border: 1px solid var(--border-light);
+            color: var(--text-primary);
+            padding: 8px 10px;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            width: 100%;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--brand-primary);
+            background: #ffffff;
+        }
+
+        .btn-add-item {
+            background: var(--brand-primary);
+            color: #ffffff;
+            border: none;
+            padding: 9px 18px;
+            border-radius: 8px;
+            font-weight: 800;
+            font-size: 0.88rem;
+            cursor: pointer;
+        }
+
+        .btn-add-item:hover {
+            background: var(--brand-primary-hover);
+        }
+
+        /* Inventory Cards */
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+        }
+
+        .card {
+            background: var(--card-surface);
+            border: 2px solid var(--border-light);
+            border-radius: 16px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+            transition: border-color 0.2s;
+        }
+
+        .card.low-stock {
+            border-color: var(--accent-amber);
+            background: var(--accent-amber-soft);
+        }
+
+        .card.out-stock {
+            border-color: var(--accent-rose);
+            background: var(--accent-rose-soft);
+        }
+
+        .card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .card-icon {
+            font-size: 2rem;
+            line-height: 1;
+            background: #f1f5f9;
+            padding: 6px;
+            border-radius: 10px;
+            display: inline-block;
+        }
+
+        .category-badge-pill {
+            font-size: 0.65rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            padding: 3px 6px;
+            border-radius: 6px;
+            background: #e2e8f0;
+            color: var(--text-muted);
+            margin-left: 6px;
+        }
+
+        .status-badge {
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+
+        .status-badge.low {
+            background: #fef3c7;
+            color: #b45309;
+            border: 1px solid #fde68a;
+        }
+
+        .status-badge.out {
+            background: #ffe4e6;
+            color: #e11d48;
+            border: 1px solid #fecdd3;
+        }
+
+        .btn-delete-card {
+            background: #f1f5f9;
+            border: none;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 6px;
+        }
+
+        .btn-delete-card:hover {
+            background: var(--accent-rose);
+            color: #ffffff;
+        }
+
+        .card-name {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+
+        .stock-control-box {
+            background: #f8fafc;
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
+            padding: 8px 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .stock-control-box span {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .stock-input {
+            width: 70px;
+            background: #ffffff;
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+            padding: 4px 6px;
+            font-size: 1rem;
+            font-weight: 800;
+            text-align: center;
+        }
+
+        .reorder-edit-box {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            padding: 0 4px;
+        }
+
+        .reorder-input {
+            width: 50px;
+            background: #f8fafc;
+            border: 1px solid var(--border-light);
+            border-radius: 4px;
+            padding: 2px 4px;
+            font-size: 0.8rem;
+            font-weight: 800;
+            text-align: center;
+        }
+
+        .shift-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            padding: 0 4px;
+        }
+
+        .shift-stats strong {
+            color: var(--accent-emerald);
+        }
+
+        .last-modified-tag {
+            font-size: 0.68rem;
+            font-weight: 600;
+            color: #94a3b8;
+            margin-bottom: 10px;
+            padding: 0 4px;
+            display: block;
+        }
+
+        .card-actions {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 8px;
+        }
+
+        .btn-used {
+            background: #ecfdf5;
+            color: #047857;
+            border: 1px solid #a7f3d0;
+            padding: 11px;
+            border-radius: 10px;
+            font-weight: 800;
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+
+        .btn-used:hover {
+            background: #10b981;
+            color: #ffffff;
+        }
+
+        .btn-used:disabled {
+            background: #f1f5f9;
+            color: #94a3b8;
+            border-color: var(--border-light);
+            cursor: not-allowed;
+        }
+
+        .btn-undo {
+            background: #f8fafc;
+            border: 1px solid var(--border-light);
+            color: var(--text-muted);
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        /* Shopping List Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 16px;
+        }
+
+        .modal-card {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 22px;
+            width: 100%;
+            max-width: 480px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .modal-header h2 {
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: #c2410c;
+        }
+
+        .modal-list-body {
+            overflow-y: auto;
+            margin-bottom: 14px;
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 8px;
+        }
+
+        .modal-item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .modal-item-row:last-child {
+            border-bottom: none;
+        }
+
+        .btn-modal-close {
+            background: #f1f5f9;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-weight: 800;
+            cursor: pointer;
+            color: var(--text-primary);
+        }
+
+        /* Analytics Tab */
+        .analytics-card {
+            background: var(--card-surface);
+            border: 1px solid var(--border-light);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .analytics-title {
+            font-size: 1.1rem;
+            font-weight: 800;
+            margin-bottom: 14px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 320px;
+            width: 100%;
+        }
+
+        .category-management-box {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .category-tag {
+            background: #f1f5f9;
+            border: 1px solid var(--border-light);
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .category-tag button {
+            background: none;
+            border: none;
+            color: var(--accent-rose);
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .backup-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .btn-backup {
+            background: #f8fafc;
+            color: var(--text-primary);
+            border: 1px solid var(--border-light);
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: 800;
+            font-size: 0.85rem;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .btn-backup:hover {
+            border-color: var(--brand-primary);
+            color: var(--brand-primary);
+        }
+
+        .btn-danger {
+            background: #fff1f2;
+            color: var(--accent-rose);
+            border-color: #fecdd3;
+        }
+
+        .btn-danger:hover {
+            background: var(--accent-rose);
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="brand-block">
+                <div class="brand-badge">STACKD</div>
+                <div class="header-title">
+                    <h1>Kitchen & Stock Tracker</h1>
+                    <div class="live-indicator"><span class="live-dot"></span> Live Cloud Sync</div>
+                </div>
+            </div>
+            <div class="nav-actions">
+                <button type="button" class="btn-nav active" id="tab-btn-pos" onclick="switchTab('pos')">📦 Stock & Kitchen</button>
+                <button type="button" class="btn-nav" id="tab-btn-settings" onclick="switchTab('settings')">📊 Shift Reports & Backups</button>
+            </div>
+        </header>
+
+        <!-- POS TAB -->
+        <div id="view-pos" class="tab-view active">
+            <!-- Shift Picker -->
+            <section class="shift-bar">
+                <div class="shift-info">
+                    <span style="font-size:0.8rem; font-weight:800; color:var(--text-muted); text-transform:uppercase;">Shift Date:</span>
+                    <input type="date" id="selected-shift-date" class="date-picker-input" onchange="handleDateChange(this.value)">
+                    <button type="button" class="btn-today" onclick="setShiftToNow()">Current Shift (2PM - 4AM)</button>
+                </div>
+                <div style="font-size:0.8rem; font-weight:700; color:var(--text-muted);">
+                    🕒 Shift Window: 2:00 PM – 4:00 AM
+                </div>
+            </section>
+
+            <!-- Rider Deliveries & Payout Settlement Section -->
+            <section class="rider-payout-card">
+                <div class="rider-header">
+                    <div class="rider-title">
+                        <span style="font-size:1.5rem;">🛵</span>
+                        <div>
+                            <strong>Rider Delivery Settlement</strong>
+                            <div style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">Track exact orders & total cash to pay rider for this shift</div>
+                        </div>
+                    </div>
+                    <div class="payout-total-badge" id="rider-payout-total-display">
+                        Total Payout: Rs. 0
+                    </div>
+                </div>
+
+                <div class="rider-controls-grid">
+                    <!-- 60 Rs Tier -->
+                    <div class="delivery-btn-card">
+                        <div>
+                            <div class="delivery-tier-label">Rs. 60 Deliveries</div>
+                            <div class="delivery-tier-sub">Short distance</div>
+                        </div>
+                        <div class="delivery-counter-actions">
+                            <button type="button" class="btn-del-count" onclick="adjustDeliveryTier('d60', -1)">-</button>
+                            <span class="del-count-val" id="count-d60">0</span>
+                            <button type="button" class="btn-del-count" onclick="adjustDeliveryTier('d60', 1)">+</button>
+                        </div>
+                    </div>
+
+                    <!-- 100 Rs Tier -->
+                    <div class="delivery-btn-card">
+                        <div>
+                            <div class="delivery-tier-label">Rs. 100 Deliveries</div>
+                            <div class="delivery-tier-sub">Standard distance</div>
+                        </div>
+                        <div class="delivery-counter-actions">
+                            <button type="button" class="btn-del-count" onclick="adjustDeliveryTier('d100', -1)">-</button>
+                            <span class="del-count-val" id="count-d100">0</span>
+                            <button type="button" class="btn-del-count" onclick="adjustDeliveryTier('d100', 1)">+</button>
+                        </div>
+                    </div>
+
+                    <!-- Custom Rs Tier -->
+                    <div class="custom-delivery-box">
+                        <div style="flex:1;">
+                            <div class="delivery-tier-label">Custom Delivery</div>
+                            <div class="delivery-tier-sub">Total custom: <strong id="custom-total-rs" style="color:var(--brand-primary)">Rs. 0</strong> (<span id="custom-count-display">0</span> trips)</div>
+                        </div>
+                        <input type="number" class="input-custom-rs" id="custom-del-input" placeholder="Rs. amount" min="1">
+                        <button type="button" class="btn-add-custom" onclick="addCustomDelivery()">+ Add</button>
+                        <button type="button" class="btn-del-count" style="width:28px; height:28px; font-size:0.8rem;" title="Undo last custom delivery" onclick="undoCustomDelivery()">↩</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Metrics & Alerts Banner -->
+            <section class="kpi-row">
+                <div class="kpi-card">
+                    <span>Total Units Remaining</span>
+                    <strong id="kpi-total-stock">0</strong>
+                </div>
+                <div class="kpi-card">
+                    <span>Used / Sold (This Shift)</span>
+                    <strong id="kpi-shift-sold" style="color: var(--accent-emerald)">0</strong>
+                </div>
+                <div class="kpi-card">
+                    <span>Low / Urgent Reorders</span>
+                    <button type="button" class="btn-shopping-alert" onclick="openShoppingListModal()">
+                        🔔 <span id="kpi-low-count">0</span> Needs Restock
+                    </button>
+                </div>
+            </section>
+
+            <!-- Category Filter Tabs -->
+            <div class="category-tab-bar" id="category-tab-bar"></div>
+
+            <!-- Add Item Box -->
+            <section class="creator-box">
+                <div class="creator-header">+ Add Any Kitchen Item / Sauce / Bread / Snack</div>
+                <div class="creator-grid">
+                    <select class="input-field" id="item-category-select"></select>
+                    <select class="input-field" id="item-icon-select">
+                        <option value="🍗">🍗 Chicken / Meat</option>
+                        <option value="🧀">🧀 Cheese / Dairy</option>
+                        <option value="🍞">🍞 Bread / Buns</option>
+                        <option value="🍟">🍟 Fries / Sides</option>
+                        <option value="🥫">🥫 Sauce Packets / Dips</option>
+                        <option value="🥤">🥤 Drink / Soda</option>
+                        <option value="💧">💧 Water</option>
+                        <option value="🌶️">🌶️ Kurkure / Spicy</option>
+                        <option value="🥔">🥔 Chips / Snacks</option>
+                        <option value="📦">📦 General Supply</option>
+                    </select>
+                    <input type="text" class="input-field" id="item-name-input" placeholder="Item Name (e.g. Potato Buns)">
+                    <input type="text" class="input-field" id="item-unit-input" placeholder="Unit (e.g. pcs, packets, kg)" value="pcs">
+                    <input type="number" class="input-field" id="item-stock-input" placeholder="Current Stock" min="0" value="50">
+                    <input type="number" class="input-field" id="item-reorder-input" placeholder="Alert Level" min="1" value="20">
+                    <button type="button" class="btn-add-item" onclick="handleAddItem()">Add to Stock</button>
+                </div>
+            </section>
+
+            <!-- Main Inventory Grid -->
+            <main class="inventory-grid" id="inventory-grid"></main>
+        </div>
+
+        <!-- REPORTS TAB -->
+        <div id="view-settings" class="tab-view">
+            <!-- Category Management Section -->
+            <section class="analytics-card">
+                <div class="analytics-title">
+                    <span>Manage Categories</span>
+                </div>
+                <div class="category-management-box" id="category-management-list"></div>
+                <div style="display:flex; gap:10px; max-width:400px;">
+                    <input type="text" class="input-field" id="new-category-input" placeholder="New Category Name">
+                    <button type="button" class="btn-add-item" onclick="handleAddCategory()">+ Add Category</button>
+                </div>
+            </section>
+
+            <!-- Shift Chart -->
+            <section class="analytics-card">
+                <div class="analytics-title">
+                    <span>Usage & Sales Breakdown (Shift: <span id="analytics-date-tag"></span>)</span>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="salesChart"></canvas>
+                </div>
+            </section>
+
+            <!-- Backup Safety -->
+            <section class="analytics-card">
+                <div class="analytics-title">💾 Device Backup & Safety</div>
+                <div class="backup-controls">
+                    <button type="button" class="btn-backup" onclick="exportDataBackup()">📥 Download Backup (JSON)</button>
+                    <button type="button" class="btn-backup" onclick="document.getElementById('import-file').click()">📤 Restore Backup File</button>
+                    <input type="file" id="import-file" style="display:none" onchange="importDataBackup(event)">
+                    <button type="button" class="btn-backup" onclick="exportSalesCSV()">📊 Export Shifts to CSV</button>
+                    <button type="button" class="btn-backup btn-danger" onclick="restoreDefaults()">⚠️ Reset to Default All-Round Menu</button>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Restock Alert / Shopping List Modal -->
+    <div class="modal-overlay" id="shopping-modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2>🔔 Restock Required Items</h2>
+                <button type="button" class="btn-delete-card" onclick="closeShoppingListModal()">✕</button>
+            </div>
+            <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:10px;">
+                Items currently at or below their reorder alert threshold:
+            </p>
+            <div class="modal-list-body" id="shopping-modal-body"></div>
+            <button type="button" class="btn-modal-close" onclick="closeShoppingListModal()">Done</button>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. FIREBASE CONFIGURATION
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyBGTN14W2l3_O8XG-sFayUQCtpiVWO_AUI",
+            authDomain: "stackd-inventory-checker.firebaseapp.com",
+            databaseURL: "https://stackd-inventory-checker-default-rtdb.firebaseio.com",
+            projectId: "stackd-inventory-checker",
+            storageBucket: "stackd-inventory-checker.firebasestorage.app",
+            messagingSenderId: "763228400348",
+            appId: "1:763228400348:web:da654c9f05e269d5046219",
+            measurementId: "G-J41JVDT5DF"
+        };
+
+        // Initialize Firebase
+        let db = null;
+        let isFirebaseReady = false;
+        try {
+            firebase.initializeApp(firebaseConfig);
+            db = firebase.database();
+            isFirebaseReady = true;
+        } catch (err) {
+            console.warn("Firebase initialization warning:", err);
+        }
+
+        // ==========================================
+        // 2. STATE & DEFAULT RESTAURANT CATALOG
+        // ==========================================
+        const DEFAULT_CATEGORIES = ["All", "Breads & Buns", "Chicken & Meat", "Fries & Sides", "Cheese & Dairy", "Sauces & Packets", "Snacks", "Drinks"];
+
+        const DEFAULT_ITEMS = [
+            // Breads
+            { id: 'item_potato_buns', name: 'Potato Buns', category: 'Breads & Buns', icon: '🍞', unit: 'buns', stock: 120, reorderLevel: 30, lastModified: 'Preset' },
+            { id: 'item_brioche_buns', name: 'Brioche Buns', category: 'Breads & Buns', icon: '🍞', unit: 'buns', stock: 80, reorderLevel: 25, lastModified: 'Preset' },
+            // Chicken & Meat
+            { id: 'item_fried_chicken_fillets', name: 'Chicken Fillets', category: 'Chicken & Meat', icon: '🍗', unit: 'pcs', stock: 75, reorderLevel: 20, lastModified: 'Preset' },
+            { id: 'item_smash_patties', name: 'Smash Beef/Chicken Patties', category: 'Chicken & Meat', icon: '🍗', unit: 'pcs', stock: 90, reorderLevel: 25, lastModified: 'Preset' },
+            { id: 'item_chicken_tenders', name: 'Crispy Tenders', category: 'Chicken & Meat', icon: '🍗', unit: 'pcs', stock: 60, reorderLevel: 20, lastModified: 'Preset' },
+            // Fries & Sides
+            { id: 'item_fries_pack', name: 'French Fries Cut', category: 'Fries & Sides', icon: '🍟', unit: 'portions', stock: 85, reorderLevel: 20, lastModified: 'Preset' },
+            // Cheese
+            { id: 'item_cheddar_slices', name: 'Cheddar Cheese Slices', category: 'Cheese & Dairy', icon: '🧀', unit: 'slices', stock: 150, reorderLevel: 40, lastModified: 'Preset' },
+            // Sauces
+            { id: 'item_secret_sauce_packets', name: 'Stackd Special Sauce Packets', category: 'Sauces & Packets', icon: '🥫', unit: 'packets', stock: 200, reorderLevel: 50, lastModified: 'Preset' },
+            { id: 'item_garlic_mayo_packets', name: 'Garlic Mayo Packets', category: 'Sauces & Packets', icon: '🥫', unit: 'packets', stock: 180, reorderLevel: 40, lastModified: 'Preset' },
+            { id: 'item_ketchup_packets', name: 'Ketchup Packets', category: 'Sauces & Packets', icon: '🥫', unit: 'packets', stock: 250, reorderLevel: 50, lastModified: 'Preset' },
+            // Snacks
+            { id: 'item_kurkure', name: 'Kurkure', category: 'Snacks', icon: '🌶️', unit: 'packets', stock: 45, reorderLevel: 20, lastModified: 'Preset' },
+            { id: 'item_classic_lays', name: 'Classic Lays', category: 'Snacks', icon: '🥔', unit: 'packets', stock: 45, reorderLevel: 20, lastModified: 'Preset' },
+            { id: 'item_paprika', name: 'Paprika Lays', category: 'Snacks', icon: '🍿', unit: 'packets', stock: 35, reorderLevel: 20, lastModified: 'Preset' },
+            { id: 'item_yogurt_herb', name: 'Yogurt & Herb Lays', category: 'Snacks', icon: '🌿', unit: 'packets', stock: 40, reorderLevel: 20, lastModified: 'Preset' },
+            { id: 'item_wavy', name: 'Wavy Lays', category: 'Snacks', icon: '🍿', unit: 'packets', stock: 35, reorderLevel: 20, lastModified: 'Preset' },
+            // Drinks
+            { id: 'item_pepsi', name: 'Pepsi', category: 'Drinks', icon: '🥤', unit: 'cans', stock: 60, reorderLevel: 20, lastModified: 'Preset' },
+            { id: 'item_sprite', name: 'Sprite', category: 'Drinks', icon: '🥤', unit: 'cans', stock: 50, reorderLevel: 20, lastModified: 'Preset' },
+            { id: 'item_water', name: 'Water', category: 'Drinks', icon: '💧', unit: 'bottles', stock: 100, reorderLevel: 20, lastModified: 'Preset' }
+        ];
+
+        let state = {
+            categories: DEFAULT_CATEGORIES,
+            items: [],
+            shifts: {}
+        };
+
+        let selectedShiftDate = '';
+        let activeCategory = 'All';
+        let salesChartInstance = null;
+
+        function calculateOperationalShift(dateObj = new Date()) {
+            const d = new Date(dateObj);
+            if (d.getHours() < 4) {
+                d.setDate(d.getDate() - 1);
+            }
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+
+        function formatTimestamp() {
+            const now = new Date();
+            return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ', ' + now.toLocaleDateString([], { month: 'short', day: 'numeric' });
+        }
+
+        // ==========================================
+        // 3. REALTIME SYNC & STORAGE
+        // ==========================================
+        function saveState() {
+            localStorage.setItem('STACKD_LIVE_STORE', JSON.stringify(state));
+            if (isFirebaseReady && db) {
+                db.ref('pos_data').set(state);
+            }
+        }
+
+        function loadState() {
+            // Local fallback first
+            try {
+                const saved = localStorage.getItem('STACKD_LIVE_STORE');
+                if (saved) {
+                    state = JSON.parse(saved);
+                }
+                if (!state.categories || state.categories.length === 0) {
+                    state.categories = [...DEFAULT_CATEGORIES];
+                }
+                if (!state.items || state.items.length === 0) {
+                    state.items = JSON.parse(JSON.stringify(DEFAULT_ITEMS));
+                }
+                if (!state.shifts) {
+                    state.shifts = {};
+                }
+            } catch (err) {
+                state = { categories: [...DEFAULT_CATEGORIES], items: JSON.parse(JSON.stringify(DEFAULT_ITEMS)), shifts: {} };
+            }
+
+            // Realtime Firebase Listener
+            if (isFirebaseReady && db) {
+                db.ref('pos_data').on('value', (snapshot) => {
+                    const cloudData = snapshot.val();
+                    if (cloudData && cloudData.items) {
+                        state = cloudData;
+                        localStorage.setItem('STACKD_LIVE_STORE', JSON.stringify(state));
+                        renderPOS();
+                    } else {
+                        // First-time cloud initialization
+                        saveState();
+                    }
+                });
+            }
+        }
+
+        function getShiftData(shiftKey) {
+            if (!state.shifts[shiftKey]) {
+                state.shifts[shiftKey] = { used: {}, deliveries: { d60: 0, d100: 0, custom: [] } };
+            }
+            if (!state.shifts[shiftKey].used) {
+                state.shifts[shiftKey].used = {};
+            }
+            if (!state.shifts[shiftKey].deliveries || typeof state.shifts[shiftKey].deliveries !== 'object' || Array.isArray(state.shifts[shiftKey].deliveries)) {
+                state.shifts[shiftKey].deliveries = { d60: 0, d100: 0, custom: [] };
+            }
+            if (!Array.isArray(state.shifts[shiftKey].deliveries.custom)) {
+                state.shifts[shiftKey].deliveries.custom = [];
+            }
+            return state.shifts[shiftKey];
+        }
+
+        function setShiftToNow() {
+            selectedShiftDate = calculateOperationalShift();
+            document.getElementById('selected-shift-date').value = selectedShiftDate;
+            renderPOS();
+        }
+
+        function handleDateChange(val) {
+            if (val) {
+                selectedShiftDate = val;
+                renderPOS();
+            }
+        }
+
+        // Rider Settlements
+        function adjustDeliveryTier(tier, amount) {
+            const shift = getShiftData(selectedShiftDate);
+            shift.deliveries[tier] = Math.max(0, (shift.deliveries[tier] || 0) + amount);
+            saveState();
+            renderPOS();
+        }
+
+        function addCustomDelivery() {
+            const input = document.getElementById('custom-del-input');
+            const val = parseInt(input.value, 10);
+            if (isNaN(val) || val <= 0) {
+                alert("Please enter a valid Rs. amount.");
+                input.focus();
+                return;
+            }
+            const shift = getShiftData(selectedShiftDate);
+            shift.deliveries.custom.push(val);
+            input.value = '';
+            saveState();
+            renderPOS();
+        }
+
+        function undoCustomDelivery() {
+            const shift = getShiftData(selectedShiftDate);
+            if (shift.deliveries.custom.length > 0) {
+                shift.deliveries.custom.pop();
+                saveState();
+                renderPOS();
+            }
+        }
+
+        function calculateRiderTotal(deliveriesObj) {
+            const count60 = deliveriesObj.d60 || 0;
+            const count100 = deliveriesObj.d100 || 0;
+            const customArr = deliveriesObj.custom || [];
+            const customSum = customArr.reduce((acc, curr) => acc + curr, 0);
+            const totalCash = (count60 * 60) + (count100 * 100) + customSum;
+            const totalTrips = count60 + count100 + customArr.length;
+            return { totalCash, totalTrips, count60, count100, customSum, customCount: customArr.length };
+        }
+
+        // Render UI
+        function renderPOS() {
+            if (!selectedShiftDate) {
+                selectedShiftDate = calculateOperationalShift();
+                document.getElementById('selected-shift-date').value = selectedShiftDate;
+            }
+
+            renderCategoryTabs();
+            renderCategorySelect();
+
+            const shift = getShiftData(selectedShiftDate);
+            const riderStats = calculateRiderTotal(shift.deliveries);
+
+            document.getElementById('count-d60').textContent = riderStats.count60;
+            document.getElementById('count-d100').textContent = riderStats.count100;
+            document.getElementById('custom-total-rs').textContent = `Rs. ${riderStats.customSum}`;
+            document.getElementById('custom-count-display').textContent = riderStats.customCount;
+            document.getElementById('rider-payout-total-display').textContent = `Total Payout: Rs. ${riderStats.totalCash} (${riderStats.totalTrips} trips)`;
+
+            const grid = document.getElementById('inventory-grid');
+            grid.innerHTML = '';
+
+            let totalStock = 0;
+            let totalUsed = 0;
+            let lowCount = 0;
+
+            const filteredItems = state.items.filter(item => activeCategory === 'All' || item.category === activeCategory);
+
+            state.items.forEach(item => {
+                totalStock += item.stock;
+                const used = shift.used[item.id] || 0;
+                totalUsed += used;
+                if (item.stock <= item.reorderLevel) lowCount++;
+            });
+
+            filteredItems.forEach(item => {
+                const itemIndex = state.items.findIndex(i => i.id === item.id);
+                const used = shift.used[item.id] || 0;
+                const isLow = item.stock <= item.reorderLevel && item.stock > 0;
+                const isOut = item.stock === 0;
+
+                let statusBadge = '';
+                if (isOut) {
+                    statusBadge = '<span class="status-badge out">Out of Stock</span>';
+                } else if (isLow) {
+                    statusBadge = `<span class="status-badge low">Low (≤ ${item.reorderLevel})</span>`;
+                }
+
+                const card = document.createElement('div');
+                card.className = `card ${isLow ? 'low-stock' : ''} ${isOut ? 'out-stock' : ''}`;
+
+                card.innerHTML = `
+                    <div>
+                        <div class="card-top">
+                            <div style="display:flex; align-items:center;">
+                                <span class="card-icon">${item.icon || '📦'}</span>
+                                <span class="category-badge-pill">${item.category || 'General'}</span>
+                            </div>
+                            <div>
+                                ${statusBadge}
+                                <button type="button" class="btn-delete-card" title="Delete Item" onclick="confirmDeleteItem(${itemIndex})">✕</button>
+                            </div>
+                        </div>
+                        <div class="card-name">${item.name}</div>
+                    </div>
+
+                    <div>
+                        <div class="stock-control-box">
+                            <span>Remaining</span>
+                            <div>
+                                <input type="number" class="stock-input" min="0" value="${item.stock}" 
+                                    onchange="updateDirectStock(${itemIndex}, this.value)"
+                                    onfocus="this.select()">
+                                <span style="font-size:0.75rem; color:#94a3b8; font-weight:700;">${item.unit || 'pcs'}</span>
+                            </div>
+                        </div>
+
+                        <div class="reorder-edit-box">
+                            <span>Reorder Alert Threshold:</span>
+                            <div>
+                                <input type="number" class="reorder-input" min="1" value="${item.reorderLevel}" 
+                                    onchange="updateReorderLevel(${itemIndex}, this.value)"
+                                    onfocus="this.select()">
+                                <span>${item.unit || 'pcs'}</span>
+                            </div>
+                        </div>
+
+                        <div class="shift-stats">
+                            <span>Used / Sold this shift:</span>
+                            <strong>${used} ${item.unit || 'pcs'}</strong>
+                        </div>
+
+                        <span class="last-modified-tag">🕒 Last adjusted: ${item.lastModified || 'Not recorded'}</span>
+
+                        <div class="card-actions">
+                            <button type="button" class="btn-used" onclick="recordUsage('${item.id}')" ${isOut ? 'disabled' : ''}>
+                                + 1 Used
+                            </button>
+                            <button type="button" class="btn-undo" title="Undo usage" onclick="undoUsage('${item.id}')">
+                                ↩
+                            </button>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+
+            document.getElementById('kpi-total-stock').textContent = totalStock;
+            document.getElementById('kpi-shift-sold').textContent = totalUsed;
+            document.getElementById('kpi-low-count').textContent = lowCount;
+        }
+
+        function renderCategoryTabs() {
+            const container = document.getElementById('category-tab-bar');
+            container.innerHTML = '';
+            state.categories.forEach(cat => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = `category-tab-btn ${cat === activeCategory ? 'active' : ''}`;
+                btn.textContent = cat;
+                btn.onclick = () => {
+                    activeCategory = cat;
+                    renderPOS();
+                };
+                container.appendChild(btn);
+            });
+        }
+
+        function renderCategorySelect() {
+            const select = document.getElementById('item-category-select');
+            select.innerHTML = '';
+            state.categories.filter(c => c !== 'All').forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat;
+                opt.textContent = cat;
+                select.appendChild(opt);
+            });
+        }
+
+        // Usage and Inventory Stock Update
+        function recordUsage(itemId) {
+            const item = state.items.find(i => i.id === itemId);
+            if (item && item.stock > 0) {
+                item.stock -= 1;
+                item.lastModified = formatTimestamp();
+                const shift = getShiftData(selectedShiftDate);
+                shift.used[itemId] = (shift.used[itemId] || 0) + 1;
+                saveState();
+                renderPOS();
+            }
+        }
+
+        function undoUsage(itemId) {
+            const item = state.items.find(i => i.id === itemId);
+            const shift = getShiftData(selectedShiftDate);
+            if (item && shift.used[itemId] && shift.used[itemId] > 0) {
+                item.stock += 1;
+                item.lastModified = formatTimestamp();
+                shift.used[itemId] -= 1;
+                saveState();
+                renderPOS();
+            }
+        }
+
+        function updateDirectStock(index, val) {
+            const parsed = parseInt(val, 10);
+            state.items[index].stock = isNaN(parsed) || parsed < 0 ? 0 : parsed;
+            state.items[index].lastModified = formatTimestamp();
+            saveState();
+            renderPOS();
+        }
+
+        function updateReorderLevel(index, val) {
+            const parsed = parseInt(val, 10);
+            state.items[index].reorderLevel = isNaN(parsed) || parsed < 1 ? 1 : parsed;
+            saveState();
+            renderPOS();
+        }
+
+        function confirmDeleteItem(index) {
+            const item = state.items[index];
+            if (confirm(`SECURITY CHECK: Are you sure you want to remove "${item.name}" from the system?`)) {
+                state.items.splice(index, 1);
+                saveState();
+                renderPOS();
+            }
+        }
+
+        function handleAddItem() {
+            const nameEl = document.getElementById('item-name-input');
+            const catEl = document.getElementById('item-category-select');
+            const iconEl = document.getElementById('item-icon-select');
+            const unitEl = document.getElementById('item-unit-input');
+            const stockEl = document.getElementById('item-stock-input');
+            const reorderEl = document.getElementById('item-reorder-input');
+
+            const name = nameEl.value.trim();
+            if (!name) {
+                alert("Please enter an item name.");
+                nameEl.focus();
+                return;
+            }
+
+            const stock = parseInt(stockEl.value, 10);
+            const reorder = parseInt(reorderEl.value, 10);
+
+            const newItem = {
+                id: 'item_' + Date.now(),
+                name: name,
+                category: catEl.value || 'General',
+                icon: iconEl.value || '📦',
+                unit: unitEl.value.trim() || 'pcs',
+                stock: isNaN(stock) || stock < 0 ? 0 : stock,
+                reorderLevel: isNaN(reorder) || reorder < 1 ? 20 : reorder,
+                lastModified: formatTimestamp()
+            };
+
+            state.items.unshift(newItem);
+            saveState();
+
+            nameEl.value = '';
+            stockEl.value = '50';
+            reorderEl.value = '20';
+
+            renderPOS();
+        }
+
+        function handleAddCategory() {
+            const input = document.getElementById('new-category-input');
+            const name = input.value.trim();
+            if (!name) return;
+            if (!state.categories.includes(name)) {
+                state.categories.push(name);
+                saveState();
+                input.value = '';
+                renderCategoryManagement();
+                renderCategoryTabs();
+                renderCategorySelect();
+            }
+        }
+
+        function removeCategory(name) {
+            if (name === 'All') return;
+            if (confirm(`Remove the category "${name}"?`)) {
+                state.categories = state.categories.filter(c => c !== name);
+                state.items.forEach(i => {
+                    if (i.category === name) i.category = 'General';
+                });
+                if (activeCategory === name) activeCategory = 'All';
+                saveState();
+                renderCategoryManagement();
+                renderPOS();
+            }
+        }
+
+        function renderCategoryManagement() {
+            const container = document.getElementById('category-management-list');
+            container.innerHTML = '';
+            state.categories.filter(c => c !== 'All').forEach(cat => {
+                const tag = document.createElement('div');
+                tag.className = 'category-tag';
+                tag.innerHTML = `<span>${cat}</span><button type="button" onclick="removeCategory('${cat}')">✕</button>`;
+                container.appendChild(tag);
+            });
+        }
+
+        function openShoppingListModal() {
+            const modalBody = document.getElementById('shopping-modal-body');
+            modalBody.innerHTML = '';
+            const lowItems = state.items.filter(i => i.stock <= i.reorderLevel);
+
+            if (lowItems.length === 0) {
+                modalBody.innerHTML = '<p style="color:#10b981; font-weight:700; padding:12px; text-align:center;">All items are well stocked!</p>';
+            } else {
+                lowItems.forEach(item => {
+                    const row = document.createElement('div');
+                    row.className = 'modal-item-row';
+                    row.innerHTML = `
+                        <div>
+                            <strong>${item.icon} ${item.name}</strong>
+                            <div style="font-size:0.75rem; color:var(--text-muted);">${item.category}</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <span style="color:var(--accent-rose); font-weight:800; font-size:1rem;">${item.stock} ${item.unit} left</span>
+                            <div style="font-size:0.75rem; color:var(--text-muted);">Reorder at: ${item.reorderLevel}</div>
+                        </div>
+                    `;
+                    modalBody.appendChild(row);
+                });
+            }
+
+            document.getElementById('shopping-modal').style.display = 'flex';
+        }
+
+        function closeShoppingListModal() {
+            document.getElementById('shopping-modal').style.display = 'none';
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-view').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.btn-nav').forEach(el => el.classList.remove('active'));
+
+            if (tabName === 'pos') {
+                document.getElementById('view-pos').classList.add('active');
+                document.getElementById('tab-btn-pos').classList.add('active');
+                renderPOS();
+            } else {
+                document.getElementById('view-settings').classList.add('active');
+                document.getElementById('tab-btn-settings').classList.add('active');
+                renderCategoryManagement();
+                renderAnalytics();
+            }
+        }
+
+        function renderAnalytics() {
+            document.getElementById('analytics-date-tag').textContent = selectedShiftDate;
+            const shift = getShiftData(selectedShiftDate);
+
+            const labels = [];
+            const usedData = [];
+            const colors = ['#4f46e5', '#10b981', '#f59e0b', '#f43f5e', '#38bdf8', '#fb923c', '#a855f7', '#ec4899', '#06b6d4'];
+
+            state.items.forEach(item => {
+                labels.push(`${item.icon} ${item.name}`);
+                usedData.push(shift.used[item.id] || 0);
+            });
+
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            if (salesChartInstance) salesChartInstance.destroy();
+
+            salesChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Units Used / Sold',
+                        data: usedData,
+                        backgroundColor: colors.slice(0, labels.length),
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, ticks: { precision: 0 } },
+                        x: { grid: { display: false } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        function exportDataBackup() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `STACKD_Live_Backup_${calculateOperationalShift()}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function importDataBackup(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if (parsed.items && parsed.shifts) {
+                        state = parsed;
+                        saveState();
+                        alert("Backup restored & synced to cloud!");
+                        renderPOS();
+                    }
+                } catch (err) {
+                    alert("Error restoring backup.");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function exportSalesCSV() {
+            let csv = "Shift Date,Item Name,Category,Units Used,Deliveries 60Rs,Deliveries 100Rs,Custom Deliveries Sum,Total Rider Payout\n";
+            for (const shiftKey in state.shifts) {
+                const shift = state.shifts[shiftKey];
+                const rStats = calculateRiderTotal(shift.deliveries || {});
+                for (const itemId in shift.used) {
+                    const item = state.items.find(i => i.id === itemId);
+                    const name = item ? item.name : itemId;
+                    const cat = item ? item.category : 'General';
+                    csv += `"${shiftKey}","${name}","${cat}",${shift.used[itemId]},${rStats.count60},${rStats.count100},${rStats.customSum},${rStats.totalCash}\n`;
+                }
+            }
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute("download", `STACKD_Kitchen_Report_${calculateOperationalShift()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        }
+
+        function restoreDefaults() {
+            if (confirm("Restore full default menu? This will sync to all devices.")) {
+                state.categories = [...DEFAULT_CATEGORIES];
+                state.items = JSON.parse(JSON.stringify(DEFAULT_ITEMS));
+                saveState();
+                renderPOS();
+            }
+        }
+
+        // Run
+        loadState();
+        setShiftToNow();
+    </script>
+</body>
+</html>
