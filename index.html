@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>STACKD Live Kitchen & Stock POS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>STACKD Kitchen & Stock POS</title>
     <!-- Firebase Realtime SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -11,18 +11,20 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
-            --bg-canvas: #f1f5f9;
+            --bg-canvas: #f8fafc;
             --card-surface: #ffffff;
             --text-primary: #0f172a;
             --text-muted: #64748b;
             --brand-primary: #4f46e5;
             --brand-primary-hover: #4338ca;
             --accent-emerald: #10b981;
+            --accent-emerald-soft: #ecfdf5;
             --accent-rose: #f43f5e;
             --accent-rose-soft: #fff1f2;
             --accent-amber: #f59e0b;
             --accent-amber-soft: #fffdf5;
-            --border-light: #cbd5e1;
+            --accent-blue: #0284c7;
+            --border-light: #e2e8f0;
         }
 
         * {
@@ -37,448 +39,343 @@
         body {
             background-color: var(--bg-canvas);
             color: var(--text-primary);
-            padding: 16px;
+            padding: 10px;
+            padding-bottom: 75px;
             min-height: 100vh;
         }
 
         .container {
-            max-width: 1240px;
+            max-width: 1200px;
             margin: 0 auto;
         }
 
-        /* Header Navigation */
+        /* Top Header */
         header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 12px;
             background: var(--card-surface);
-            padding: 14px 20px;
-            border-radius: 16px;
+            padding: 10px 14px;
+            border-radius: 14px;
             border: 1px solid var(--border-light);
-            margin-bottom: 16px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+            margin-bottom: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
         }
 
         .brand-block {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 8px;
         }
 
         .brand-badge {
             background: #0f172a;
             color: #facc15;
             font-weight: 900;
-            font-size: 1.15rem;
-            padding: 6px 14px;
-            border-radius: 10px;
-            letter-spacing: 1.5px;
+            font-size: 0.95rem;
+            padding: 4px 10px;
+            border-radius: 8px;
+            letter-spacing: 1px;
         }
 
         .header-title h1 {
-            font-size: 1.35rem;
+            font-size: 1.05rem;
             font-weight: 800;
+            line-height: 1.1;
         }
 
-        .live-indicator {
+        .live-status {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            font-size: 0.75rem;
+            gap: 5px;
+            font-size: 0.7rem;
             font-weight: 800;
-            color: var(--accent-emerald);
+            padding: 2px 7px;
+            border-radius: 10px;
+        }
+
+        .live-status.online {
             background: #ecfdf5;
-            padding: 2px 8px;
-            border-radius: 12px;
+            color: var(--accent-emerald);
             border: 1px solid #a7f3d0;
-            margin-top: 2px;
+        }
+
+        .live-status.syncing {
+            background: #fffdf5;
+            color: var(--accent-amber);
+            border: 1px solid #fde68a;
         }
 
         .live-dot {
-            width: 8px;
-            height: 8px;
-            background: var(--accent-emerald);
+            width: 6px;
+            height: 6px;
             border-radius: 50%;
-            animation: pulse 1.5s infinite;
+            background: currentColor;
         }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
-        }
-
-        .nav-actions {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .btn-nav {
-            background: #e2e8f0;
-            color: var(--text-primary);
-            border: 1px solid var(--border-light);
-            padding: 9px 16px;
-            border-radius: 10px;
-            font-weight: 700;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: 0.15s;
-        }
-
-        .btn-nav.active {
-            background: var(--brand-primary);
-            color: #ffffff;
-            border-color: var(--brand-primary);
-        }
-
-        .tab-view {
-            display: none;
-        }
-
-        .tab-view.active {
-            display: block;
-        }
-
-        /* Shift Bar */
+        /* Shift & Date Bar */
         .shift-bar {
             background: var(--card-surface);
             border: 1px solid var(--border-light);
-            border-radius: 14px;
-            padding: 12px 18px;
-            margin-bottom: 16px;
+            border-radius: 12px;
+            padding: 8px 12px;
+            margin-bottom: 10px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-
-        .shift-info {
-            display: flex;
-            align-items: center;
             gap: 8px;
-            flex-wrap: wrap;
         }
 
         .date-picker-input {
-            background: #f8fafc;
+            background: #f1f5f9;
             border: 1px solid var(--border-light);
-            padding: 6px 10px;
+            padding: 6px 8px;
             border-radius: 8px;
-            font-size: 0.9rem;
+            font-size: 0.82rem;
             font-weight: 700;
-            cursor: pointer;
+            outline: none;
+            max-width: 140px;
         }
 
         .btn-today {
             background: #e0e7ff;
             color: var(--brand-primary);
             border: none;
-            padding: 7px 12px;
+            padding: 6px 10px;
             border-radius: 8px;
-            font-size: 0.85rem;
-            font-weight: 700;
+            font-size: 0.78rem;
+            font-weight: 800;
             cursor: pointer;
+            white-space: nowrap;
         }
 
         /* Rider Payout Card */
-        .rider-payout-card {
+        .rider-card {
             background: #ffffff;
-            border: 2px solid #e0e7ff;
-            border-radius: 16px;
-            padding: 16px 20px;
-            margin-bottom: 16px;
-            box-shadow: 0 4px 10px rgba(79, 70, 229, 0.04);
+            border: 1.5px solid #e0e7ff;
+            border-radius: 14px;
+            padding: 12px;
+            margin-bottom: 10px;
         }
 
         .rider-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 14px;
+            margin-bottom: 10px;
         }
 
-        .rider-title {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 1.05rem;
-            font-weight: 800;
-            color: #1e1b4b;
-        }
-
-        .payout-total-badge {
-            background: linear-gradient(135deg, #4f46e5, #4338ca);
+        .payout-badge {
+            background: #4f46e5;
             color: #ffffff;
-            padding: 8px 18px;
-            border-radius: 12px;
-            font-size: 1rem;
+            padding: 5px 12px;
+            border-radius: 10px;
+            font-size: 0.88rem;
             font-weight: 900;
-            letter-spacing: 0.5px;
-            box-shadow: 0 4px 10px rgba(79, 70, 229, 0.25);
         }
 
-        .rider-controls-grid {
+        .rider-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 12px;
-            align-items: center;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
         }
 
-        .delivery-btn-card {
+        @media (max-width: 480px) {
+            .rider-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .rider-tier {
             background: #f8fafc;
             border: 1px solid var(--border-light);
-            border-radius: 12px;
-            padding: 10px 14px;
+            border-radius: 10px;
+            padding: 8px 10px;
             display: flex;
             align-items: center;
             justify-content: space-between;
         }
 
-        .delivery-tier-label {
-            font-size: 0.85rem;
-            font-weight: 800;
-            color: var(--text-primary);
-        }
-
-        .delivery-tier-sub {
-            font-size: 0.72rem;
-            font-weight: 700;
-            color: var(--text-muted);
-        }
-
-        .delivery-counter-actions {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .btn-del-count {
-            background: #ffffff;
-            border: 1px solid var(--border-light);
-            width: 32px;
-            height: 32px;
+        .counter-btn {
+            width: 34px;
+            height: 34px;
             border-radius: 8px;
+            border: 1px solid var(--border-light);
+            background: #ffffff;
             font-size: 1.1rem;
             font-weight: 800;
-            cursor: pointer;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.1s;
+            cursor: pointer;
         }
 
-        .btn-del-count:active {
+        .counter-btn:active {
             background: var(--brand-primary);
-            color: #ffffff;
+            color: white;
         }
 
-        .del-count-val {
-            font-size: 1.15rem;
-            font-weight: 900;
-            color: var(--brand-primary);
-            min-width: 26px;
-            text-align: center;
-        }
-
-        .custom-delivery-box {
+        .custom-box {
+            grid-column: span 2;
             display: flex;
             gap: 6px;
             background: #f8fafc;
             border: 1px solid var(--border-light);
-            border-radius: 12px;
-            padding: 8px 12px;
+            border-radius: 10px;
+            padding: 8px 10px;
             align-items: center;
         }
 
-        .input-custom-rs {
-            width: 85px;
-            background: #ffffff;
-            border: 1px solid var(--border-light);
-            padding: 6px 8px;
-            border-radius: 8px;
-            font-size: 0.88rem;
-            font-weight: 700;
-            text-align: center;
-            outline: none;
+        @media (max-width: 480px) {
+            .custom-box {
+                grid-column: span 1;
+            }
         }
 
-        .btn-add-custom {
-            background: var(--brand-primary);
-            color: #ffffff;
-            border: none;
-            padding: 7px 12px;
-            border-radius: 8px;
-            font-size: 0.8rem;
-            font-weight: 800;
-            cursor: pointer;
-            white-space: nowrap;
-        }
-
-        /* KPI Banner */
+        /* KPI Row */
         .kpi-row {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 12px;
-            margin-bottom: 16px;
+            grid-template-columns: 1fr 1fr 1.2fr;
+            gap: 6px;
+            margin-bottom: 10px;
         }
 
-        .kpi-card {
+        .kpi-pill {
             background: var(--card-surface);
             border: 1px solid var(--border-light);
-            border-radius: 14px;
-            padding: 12px 16px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+            border-radius: 10px;
+            padding: 8px;
+            text-align: center;
         }
 
-        .kpi-card span {
-            font-size: 0.75rem;
-            font-weight: 700;
+        .kpi-pill span {
+            font-size: 0.65rem;
+            font-weight: 800;
             color: var(--text-muted);
             text-transform: uppercase;
+            display: block;
         }
 
-        .kpi-card strong {
-            font-size: 1.4rem;
-            font-weight: 800;
+        .kpi-pill strong {
+            font-size: 1.1rem;
+            font-weight: 900;
         }
 
-        .btn-shopping-alert {
+        .btn-alert-pill {
             background: #fff7ed;
             border: 1px solid #fdba74;
             color: #c2410c;
-            padding: 10px 14px;
-            border-radius: 12px;
-            font-size: 0.85rem;
-            font-weight: 800;
             cursor: pointer;
+            width: 100%;
+        }
+
+        /* Category Scroll Bar */
+        .cat-scroll {
             display: flex;
-            align-items: center;
             gap: 6px;
-            transition: 0.15s;
-        }
-
-        .btn-shopping-alert:hover {
-            background: #ffedd5;
-        }
-
-        /* Category Filter Tabs */
-        .category-tab-bar {
-            display: flex;
-            align-items: center;
-            gap: 8px;
             overflow-x: auto;
-            padding-bottom: 8px;
-            margin-bottom: 14px;
+            padding-bottom: 6px;
+            margin-bottom: 10px;
+            scrollbar-width: none;
         }
 
-        .category-tab-btn {
+        .cat-scroll::-webkit-scrollbar {
+            display: none;
+        }
+
+        .cat-btn {
             background: var(--card-surface);
             border: 1px solid var(--border-light);
-            padding: 10px 16px;
-            border-radius: 12px;
-            font-size: 0.9rem;
+            padding: 7px 12px;
+            border-radius: 10px;
+            font-size: 0.78rem;
             font-weight: 800;
             color: var(--text-muted);
             white-space: nowrap;
             cursor: pointer;
-            transition: all 0.15s;
         }
 
-        .category-tab-btn.active {
+        .cat-btn.active {
             background: #0f172a;
             color: #facc15;
             border-color: #0f172a;
         }
 
-        /* Item Creator Section */
-        .creator-box {
+        /* Accordion for Add Item */
+        .add-accordion {
             background: var(--card-surface);
             border: 1px solid var(--border-light);
-            border-radius: 14px;
-            padding: 14px 18px;
-            margin-bottom: 16px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            overflow: hidden;
         }
 
-        .creator-header {
+        .add-accordion summary {
+            padding: 10px 14px;
             font-size: 0.8rem;
             font-weight: 800;
             color: var(--brand-primary);
-            text-transform: uppercase;
-            margin-bottom: 10px;
-        }
-
-        .creator-grid {
-            display: grid;
-            grid-template-columns: 140px 130px 1.5fr 1fr 1fr 1fr auto;
-            gap: 8px;
+            cursor: pointer;
+            list-style: none;
+            display: flex;
+            justify-content: space-between;
             align-items: center;
         }
 
-        @media (max-width: 900px) {
-            .creator-grid {
-                grid-template-columns: 1fr 1fr;
-            }
-            .creator-grid button {
-                grid-column: span 2;
-            }
+        .add-form-grid {
+            padding: 10px 14px 14px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            border-top: 1px solid var(--border-light);
         }
 
-        .input-field {
+        .input-box {
             background: #f8fafc;
             border: 1px solid var(--border-light);
-            color: var(--text-primary);
             padding: 8px 10px;
             border-radius: 8px;
-            font-size: 0.88rem;
+            font-size: 0.85rem;
             font-weight: 600;
             width: 100%;
-        }
-
-        .input-field:focus {
             outline: none;
-            border-color: var(--brand-primary);
-            background: #ffffff;
         }
 
-        .btn-add-item {
+        .btn-add-submit {
+            grid-column: span 2;
             background: var(--brand-primary);
-            color: #ffffff;
+            color: white;
             border: none;
-            padding: 9px 18px;
+            padding: 10px;
             border-radius: 8px;
             font-weight: 800;
             font-size: 0.88rem;
             cursor: pointer;
         }
 
-        .btn-add-item:hover {
-            background: var(--brand-primary-hover);
-        }
-
-        /* Inventory Cards */
+        /* Mobile Inventory Cards */
         .inventory-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 16px;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 8px;
+        }
+
+        @media (min-width: 768px) {
+            .inventory-grid {
+                grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+                gap: 12px;
+            }
         }
 
         .card {
             background: var(--card-surface);
-            border: 2px solid var(--border-light);
-            border-radius: 16px;
-            padding: 16px;
+            border: 1.5px solid var(--border-light);
+            border-radius: 12px;
+            padding: 10px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-            transition: border-color 0.2s;
+            position: relative;
         }
 
         .card.low-stock {
@@ -491,199 +388,244 @@
             background: var(--accent-rose-soft);
         }
 
-        .card-top {
+        .card-header {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .card-icon {
-            font-size: 2rem;
+            font-size: 1.6rem;
             line-height: 1;
-            background: #f1f5f9;
-            padding: 6px;
-            border-radius: 10px;
-            display: inline-block;
         }
 
-        .category-badge-pill {
-            font-size: 0.65rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            padding: 3px 6px;
-            border-radius: 6px;
-            background: #e2e8f0;
-            color: var(--text-muted);
-            margin-left: 6px;
-        }
-
-        .status-badge {
-            font-size: 0.7rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            padding: 4px 8px;
-            border-radius: 6px;
-        }
-
-        .status-badge.low {
-            background: #fef3c7;
-            color: #b45309;
-            border: 1px solid #fde68a;
-        }
-
-        .status-badge.out {
-            background: #ffe4e6;
-            color: #e11d48;
-            border: 1px solid #fecdd3;
-        }
-
-        .btn-delete-card {
-            background: #f1f5f9;
+        .btn-del-item {
+            background: transparent;
             border: none;
-            color: var(--text-muted);
+            color: #cbd5e1;
             font-size: 0.9rem;
-            width: 26px;
-            height: 26px;
-            border-radius: 50%;
+            padding: 2px 4px;
             cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            margin-left: 6px;
-        }
-
-        .btn-delete-card:hover {
-            background: var(--accent-rose);
-            color: #ffffff;
         }
 
         .card-name {
-            font-size: 1.15rem;
+            font-size: 0.88rem;
             font-weight: 800;
             color: var(--text-primary);
-            margin-bottom: 10px;
+            line-height: 1.2;
+            margin-bottom: 8px;
+            min-height: 28px;
         }
 
-        .stock-control-box {
+        .stock-box {
             background: #f8fafc;
             border: 1px solid var(--border-light);
-            border-radius: 10px;
-            padding: 8px 10px;
+            border-radius: 8px;
+            padding: 4px 6px;
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            margin-bottom: 8px;
+            align-items: center;
+            margin-bottom: 6px;
         }
 
-        .stock-control-box span {
-            font-size: 0.75rem;
+        .stock-box span {
+            font-size: 0.68rem;
             font-weight: 700;
             color: var(--text-muted);
-            text-transform: uppercase;
         }
 
-        .stock-input {
-            width: 70px;
-            background: #ffffff;
+        .stock-input-mobile {
+            width: 50px;
+            background: white;
             border: 1px solid var(--border-light);
             border-radius: 6px;
-            padding: 4px 6px;
-            font-size: 1rem;
-            font-weight: 800;
-            text-align: center;
-        }
-
-        .reorder-edit-box {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            font-size: 0.75rem;
-            font-weight: 700;
-            color: var(--text-muted);
-            margin-bottom: 8px;
-            padding: 0 4px;
-        }
-
-        .reorder-input {
-            width: 50px;
-            background: #f8fafc;
-            border: 1px solid var(--border-light);
-            border-radius: 4px;
             padding: 2px 4px;
-            font-size: 0.8rem;
+            font-size: 0.88rem;
             font-weight: 800;
             text-align: center;
         }
 
-        .shift-stats {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.8rem;
+        .used-label {
+            font-size: 0.72rem;
             font-weight: 700;
             color: var(--text-muted);
-            margin-bottom: 6px;
-            padding: 0 4px;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
         }
 
-        .shift-stats strong {
+        .used-label strong {
             color: var(--accent-emerald);
-        }
-
-        .last-modified-tag {
-            font-size: 0.68rem;
-            font-weight: 600;
-            color: #94a3b8;
-            margin-bottom: 10px;
-            padding: 0 4px;
-            display: block;
         }
 
         .card-actions {
             display: grid;
             grid-template-columns: 1fr auto;
-            gap: 8px;
+            gap: 6px;
         }
 
-        .btn-used {
+        .btn-plus {
             background: #ecfdf5;
             color: #047857;
             border: 1px solid #a7f3d0;
-            padding: 11px;
-            border-radius: 10px;
-            font-weight: 800;
+            padding: 10px 6px;
+            border-radius: 8px;
+            font-weight: 900;
             font-size: 0.95rem;
             cursor: pointer;
+            touch-action: manipulation;
         }
 
-        .btn-used:hover {
+        .btn-plus:active {
             background: #10b981;
-            color: #ffffff;
-        }
-
-        .btn-used:disabled {
-            background: #f1f5f9;
-            color: #94a3b8;
-            border-color: var(--border-light);
-            cursor: not-allowed;
+            color: white;
         }
 
         .btn-undo {
             background: #f8fafc;
             border: 1px solid var(--border-light);
             color: var(--text-muted);
-            padding: 10px 14px;
-            border-radius: 10px;
+            padding: 8px 10px;
+            border-radius: 8px;
             font-weight: 800;
             cursor: pointer;
         }
 
-        /* Shopping List Modal */
+        /* Order Requests Tab Styles */
+        .order-request-card {
+            background: #ffffff;
+            border: 1.5px solid var(--border-light);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+        }
+
+        .order-request-card.pending {
+            border-left: 5px solid var(--accent-amber);
+            background: #fffdf8;
+        }
+
+        .order-request-card.ordered {
+            border-left: 5px solid var(--accent-blue);
+            background: #f0f9ff;
+        }
+
+        .order-request-card.received {
+            border-left: 5px solid var(--accent-emerald);
+            background: #f0fdf4;
+            opacity: 0.85;
+        }
+
+        .request-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .request-status-pill {
+            font-size: 0.68rem;
+            font-weight: 900;
+            padding: 3px 8px;
+            border-radius: 6px;
+            text-transform: uppercase;
+        }
+
+        .pill-pending { background: #fef3c7; color: #b45309; }
+        .pill-ordered { background: #e0f2fe; color: #0369a1; }
+        .pill-received { background: #dcfce7; color: #15803d; }
+
+        .request-note-box {
+            background: rgba(0,0,0,0.03);
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 0.78rem;
+            color: var(--text-primary);
+            font-style: italic;
+        }
+
+        .request-actions-row {
+            display: flex;
+            gap: 6px;
+            margin-top: 4px;
+        }
+
+        .btn-status-act {
+            flex: 1;
+            padding: 7px 10px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            border: none;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .btn-act-order { background: #e0f2fe; color: #0284c7; }
+        .btn-act-receive { background: #dcfce7; color: #16a34a; }
+        .btn-act-del { background: #fee2e2; color: #dc2626; flex: 0 0 35px; }
+
+        /* Bottom Tab Bar for Mobile */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--card-surface);
+            border-top: 1px solid var(--border-light);
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 6px;
+            z-index: 100;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+        }
+
+        .btn-bottom-tab {
+            flex: 1;
+            background: transparent;
+            border: none;
+            padding: 8px 4px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: var(--text-muted);
+            cursor: pointer;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .btn-bottom-tab.active {
+            background: #0f172a;
+            color: #facc15;
+        }
+
+        .badge-count {
+            background: var(--accent-rose);
+            color: white;
+            border-radius: 10px;
+            padding: 1px 5px;
+            font-size: 0.65rem;
+            margin-left: 3px;
+        }
+
+        .tab-view {
+            display: none;
+        }
+
+        .tab-view.active {
+            display: block;
+        }
+
+        /* Modal */
         .modal-overlay {
             position: fixed;
             inset: 0;
             background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(4px);
+            backdrop-filter: blur(2px);
             display: none;
             align-items: center;
             justify-content: center;
@@ -692,144 +634,26 @@
         }
 
         .modal-card {
-            background: #ffffff;
-            border-radius: 20px;
-            padding: 22px;
+            background: white;
+            border-radius: 16px;
+            padding: 16px;
             width: 100%;
-            max-width: 480px;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
-            max-height: 85vh;
+            max-width: 400px;
+            max-height: 80vh;
             display: flex;
             flex-direction: column;
         }
 
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 14px;
-        }
-
-        .modal-header h2 {
-            font-size: 1.25rem;
-            font-weight: 800;
-            color: #c2410c;
-        }
-
-        .modal-list-body {
+        .modal-body {
             overflow-y: auto;
-            margin-bottom: 14px;
-            border: 1px solid var(--border-light);
-            border-radius: 12px;
-            padding: 8px;
+            margin: 10px 0;
         }
 
-        .modal-item-row {
+        .modal-row {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            padding: 8px;
+            padding: 8px 0;
             border-bottom: 1px solid #f1f5f9;
-        }
-
-        .modal-item-row:last-child {
-            border-bottom: none;
-        }
-
-        .btn-modal-close {
-            background: #f1f5f9;
-            border: none;
-            padding: 10px 16px;
-            border-radius: 10px;
-            font-weight: 800;
-            cursor: pointer;
-            color: var(--text-primary);
-        }
-
-        /* Analytics Tab */
-        .analytics-card {
-            background: var(--card-surface);
-            border: 1px solid var(--border-light);
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 16px;
-        }
-
-        .analytics-title {
-            font-size: 1.1rem;
-            font-weight: 800;
-            margin-bottom: 14px;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .chart-wrapper {
-            position: relative;
-            height: 320px;
-            width: 100%;
-        }
-
-        .category-management-box {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            margin-bottom: 16px;
-            flex-wrap: wrap;
-        }
-
-        .category-tag {
-            background: #f1f5f9;
-            border: 1px solid var(--border-light);
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            font-weight: 700;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .category-tag button {
-            background: none;
-            border: none;
-            color: var(--accent-rose);
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .backup-controls {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 10px;
-            margin-top: 12px;
-        }
-
-        .btn-backup {
-            background: #f8fafc;
-            color: var(--text-primary);
-            border: 1px solid var(--border-light);
-            padding: 12px;
-            border-radius: 10px;
-            font-weight: 800;
-            font-size: 0.85rem;
-            cursor: pointer;
-            text-align: center;
-        }
-
-        .btn-backup:hover {
-            border-color: var(--brand-primary);
-            color: var(--brand-primary);
-        }
-
-        .btn-danger {
-            background: #fff1f2;
-            color: var(--accent-rose);
-            border-color: #fecdd3;
-        }
-
-        .btn-danger:hover {
-            background: var(--accent-rose);
-            color: #ffffff;
         }
     </style>
 </head>
@@ -841,185 +665,189 @@
             <div class="brand-block">
                 <div class="brand-badge">STACKD</div>
                 <div class="header-title">
-                    <h1>Kitchen & Stock Tracker</h1>
-                    <div class="live-indicator"><span class="live-dot"></span> Live Cloud Sync</div>
+                    <h1>Kitchen & Orders</h1>
                 </div>
             </div>
-            <div class="nav-actions">
-                <button type="button" class="btn-nav active" id="tab-btn-pos" onclick="switchTab('pos')">📦 Stock & Kitchen</button>
-                <button type="button" class="btn-nav" id="tab-btn-settings" onclick="switchTab('settings')">📊 Shift Reports & Backups</button>
+            <div id="sync-badge" class="live-status online">
+                <span class="live-dot"></span> <span id="sync-text">Live Sync</span>
             </div>
         </header>
 
-        <!-- POS TAB -->
+        <!-- TAB 1: POS / Stock -->
         <div id="view-pos" class="tab-view active">
             <!-- Shift Picker -->
             <section class="shift-bar">
-                <div class="shift-info">
-                    <span style="font-size:0.8rem; font-weight:800; color:var(--text-muted); text-transform:uppercase;">Shift Date:</span>
+                <div style="display:flex; align-items:center; gap:6px;">
+                    <span style="font-size:0.75rem; font-weight:800; color:var(--text-muted);">SHIFT:</span>
                     <input type="date" id="selected-shift-date" class="date-picker-input" onchange="handleDateChange(this.value)">
-                    <button type="button" class="btn-today" onclick="setShiftToNow()">Current Shift (2PM - 4AM)</button>
                 </div>
-                <div style="font-size:0.8rem; font-weight:700; color:var(--text-muted);">
-                    🕒 Shift Window: 2:00 PM – 4:00 AM
-                </div>
+                <button type="button" class="btn-today" onclick="setShiftToNow()">Current Shift</button>
             </section>
 
-            <!-- Rider Deliveries & Payout Settlement Section -->
-            <section class="rider-payout-card">
+            <!-- Rider Deliveries Section -->
+            <section class="rider-card">
                 <div class="rider-header">
-                    <div class="rider-title">
-                        <span style="font-size:1.5rem;">🛵</span>
-                        <div>
-                            <strong>Rider Delivery Settlement</strong>
-                            <div style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">Track exact orders & total cash to pay rider for this shift</div>
-                        </div>
-                    </div>
-                    <div class="payout-total-badge" id="rider-payout-total-display">
-                        Total Payout: Rs. 0
-                    </div>
+                    <strong style="font-size:0.88rem; color:#1e1b4b;">🛵 Rider Settlement</strong>
+                    <div class="payout-badge" id="rider-payout-total-display">Rs. 0 (0 trips)</div>
                 </div>
-
-                <div class="rider-controls-grid">
-                    <!-- 60 Rs Tier -->
-                    <div class="delivery-btn-card">
+                <div class="rider-grid">
+                    <div class="rider-tier">
                         <div>
-                            <div class="delivery-tier-label">Rs. 60 Deliveries</div>
-                            <div class="delivery-tier-sub">Short distance</div>
+                            <div style="font-size:0.8rem; font-weight:800;">Rs. 60</div>
+                            <div style="font-size:0.65rem; color:var(--text-muted);">Short trip</div>
                         </div>
-                        <div class="delivery-counter-actions">
-                            <button type="button" class="btn-del-count" onclick="adjustDeliveryTier('d60', -1)">-</button>
-                            <span class="del-count-val" id="count-d60">0</span>
-                            <button type="button" class="btn-del-count" onclick="adjustDeliveryTier('d60', 1)">+</button>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <button type="button" class="counter-btn" onclick="adjustDeliveryTier('d60', -1)">-</button>
+                            <strong id="count-d60" style="min-width:20px; text-align:center; font-size:1rem; color:var(--brand-primary);">0</strong>
+                            <button type="button" class="counter-btn" onclick="adjustDeliveryTier('d60', 1)">+</button>
                         </div>
                     </div>
 
-                    <!-- 100 Rs Tier -->
-                    <div class="delivery-btn-card">
+                    <div class="rider-tier">
                         <div>
-                            <div class="delivery-tier-label">Rs. 100 Deliveries</div>
-                            <div class="delivery-tier-sub">Standard distance</div>
+                            <div style="font-size:0.8rem; font-weight:800;">Rs. 100</div>
+                            <div style="font-size:0.65rem; color:var(--text-muted);">Standard</div>
                         </div>
-                        <div class="delivery-counter-actions">
-                            <button type="button" class="btn-del-count" onclick="adjustDeliveryTier('d100', -1)">-</button>
-                            <span class="del-count-val" id="count-d100">0</span>
-                            <button type="button" class="btn-del-count" onclick="adjustDeliveryTier('d100', 1)">+</button>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <button type="button" class="counter-btn" onclick="adjustDeliveryTier('d100', -1)">-</button>
+                            <strong id="count-d100" style="min-width:20px; text-align:center; font-size:1rem; color:var(--brand-primary);">0</strong>
+                            <button type="button" class="counter-btn" onclick="adjustDeliveryTier('d100', 1)">+</button>
                         </div>
                     </div>
 
-                    <!-- Custom Rs Tier -->
-                    <div class="custom-delivery-box">
+                    <div class="custom-box">
                         <div style="flex:1;">
-                            <div class="delivery-tier-label">Custom Delivery</div>
-                            <div class="delivery-tier-sub">Total custom: <strong id="custom-total-rs" style="color:var(--brand-primary)">Rs. 0</strong> (<span id="custom-count-display">0</span> trips)</div>
+                            <div style="font-size:0.78rem; font-weight:800;">Custom Rs.</div>
+                            <div style="font-size:0.65rem; color:var(--text-muted);">Total: <strong id="custom-total-rs">Rs. 0</strong> (<span id="custom-count-display">0</span>)</div>
                         </div>
-                        <input type="number" class="input-custom-rs" id="custom-del-input" placeholder="Rs. amount" min="1">
-                        <button type="button" class="btn-add-custom" onclick="addCustomDelivery()">+ Add</button>
-                        <button type="button" class="btn-del-count" style="width:28px; height:28px; font-size:0.8rem;" title="Undo last custom delivery" onclick="undoCustomDelivery()">↩</button>
+                        <input type="number" class="input-box" style="width:75px; padding:6px;" id="custom-del-input" placeholder="Rs.">
+                        <button type="button" class="btn-today" onclick="addCustomDelivery()">+ Add</button>
+                        <button type="button" class="counter-btn" style="width:28px; height:28px;" onclick="undoCustomDelivery()">↩</button>
                     </div>
                 </div>
             </section>
 
-            <!-- Metrics & Alerts Banner -->
+            <!-- KPI Row -->
             <section class="kpi-row">
-                <div class="kpi-card">
-                    <span>Total Units Remaining</span>
+                <div class="kpi-pill">
+                    <span>Stock Left</span>
                     <strong id="kpi-total-stock">0</strong>
                 </div>
-                <div class="kpi-card">
-                    <span>Used / Sold (This Shift)</span>
-                    <strong id="kpi-shift-sold" style="color: var(--accent-emerald)">0</strong>
+                <div class="kpi-pill">
+                    <span>Used / Sold</span>
+                    <strong id="kpi-shift-sold" style="color:var(--accent-emerald)">0</strong>
                 </div>
-                <div class="kpi-card">
-                    <span>Low / Urgent Reorders</span>
-                    <button type="button" class="btn-shopping-alert" onclick="openShoppingListModal()">
-                        🔔 <span id="kpi-low-count">0</span> Needs Restock
-                    </button>
-                </div>
+                <button type="button" class="kpi-pill btn-alert-pill" onclick="openShoppingListModal()">
+                    <span>Low Stock</span>
+                    <strong id="kpi-low-count">0 🔔</strong>
+                </button>
             </section>
 
-            <!-- Category Filter Tabs -->
-            <div class="category-tab-bar" id="category-tab-bar"></div>
+            <!-- Category Scroll -->
+            <div class="cat-scroll" id="category-tab-bar"></div>
 
-            <!-- Add Item Box -->
-            <section class="creator-box">
-                <div class="creator-header">+ Add Any Kitchen Item / Sauce / Bread / Snack</div>
-                <div class="creator-grid">
-                    <select class="input-field" id="item-category-select"></select>
-                    <select class="input-field" id="item-icon-select">
-                        <option value="🍗">🍗 Chicken / Meat</option>
-                        <option value="🧀">🧀 Cheese / Dairy</option>
-                        <option value="🍞">🍞 Bread / Buns</option>
-                        <option value="🍟">🍟 Fries / Sides</option>
-                        <option value="🥫">🥫 Sauce Packets / Dips</option>
-                        <option value="🥤">🥤 Drink / Soda</option>
+            <!-- Add Item Accordion -->
+            <details class="add-accordion">
+                <summary>
+                    <span>+ Add New Menu Item / Raw Material</span>
+                    <span>▼</span>
+                </summary>
+                <div class="add-form-grid">
+                    <select class="input-box" id="item-category-select"></select>
+                    <select class="input-box" id="item-icon-select">
+                        <option value="🍗">🍗 Chicken</option>
+                        <option value="🧀">🧀 Cheese</option>
+                        <option value="🍞">🍞 Buns</option>
+                        <option value="🍟">🍟 Fries</option>
+                        <option value="🥫">🥫 Sauce</option>
+                        <option value="🥤">🥤 Drink</option>
                         <option value="💧">💧 Water</option>
-                        <option value="🌶️">🌶️ Kurkure / Spicy</option>
-                        <option value="🥔">🥔 Chips / Snacks</option>
-                        <option value="📦">📦 General Supply</option>
+                        <option value="🌶️">🌶️ Kurkure</option>
+                        <option value="🥔">🥔 Chips</option>
+                        <option value="📦">📦 Supply</option>
                     </select>
-                    <input type="text" class="input-field" id="item-name-input" placeholder="Item Name (e.g. Potato Buns)">
-                    <input type="text" class="input-field" id="item-unit-input" placeholder="Unit (e.g. pcs, packets, kg)" value="pcs">
-                    <input type="number" class="input-field" id="item-stock-input" placeholder="Current Stock" min="0" value="50">
-                    <input type="number" class="input-field" id="item-reorder-input" placeholder="Alert Level" min="1" value="20">
-                    <button type="button" class="btn-add-item" onclick="handleAddItem()">Add to Stock</button>
+                    <input type="text" class="input-box" id="item-name-input" placeholder="Item Name">
+                    <input type="text" class="input-box" id="item-unit-input" placeholder="Unit (pcs/buns/kg)" value="pcs">
+                    <input type="number" class="input-box" id="item-stock-input" placeholder="Stock Count" value="50">
+                    <input type="number" class="input-box" id="item-reorder-input" placeholder="Alert Threshold" value="20">
+                    <button type="button" class="btn-add-submit" onclick="handleAddItem()">Add to Menu & Sync</button>
                 </div>
-            </section>
+            </details>
 
-            <!-- Main Inventory Grid -->
+            <!-- Main Grid -->
             <main class="inventory-grid" id="inventory-grid"></main>
         </div>
 
-        <!-- REPORTS TAB -->
-        <div id="view-settings" class="tab-view">
-            <!-- Category Management Section -->
-            <section class="analytics-card">
-                <div class="analytics-title">
-                    <span>Manage Categories</span>
-                </div>
-                <div class="category-management-box" id="category-management-list"></div>
-                <div style="display:flex; gap:10px; max-width:400px;">
-                    <input type="text" class="input-field" id="new-category-input" placeholder="New Category Name">
-                    <button type="button" class="btn-add-item" onclick="handleAddCategory()">+ Add Category</button>
+        <!-- TAB 2: Order Requests (Staff & Restock Workflow) -->
+        <div id="view-orders" class="tab-view">
+            <!-- New Request Form -->
+            <section class="rider-card">
+                <strong style="font-size:0.95rem; color:#1e1b4b; display:block; margin-bottom:8px;">📝 Request Supplies / New Stock</strong>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <div style="display:grid; grid-template-columns:1.5fr 1fr; gap:6px;">
+                        <select class="input-box" id="req-item-select"></select>
+                        <input type="number" class="input-box" id="req-qty-input" placeholder="Qty needed" min="1" value="10">
+                    </div>
+                    <input type="text" class="input-box" id="req-note-input" placeholder="Add note (e.g. urgent, brand preference, vendor)">
+                    <button type="button" class="btn-today" style="padding:10px; font-size:0.85rem;" onclick="submitOrderRequest()">📢 Send Request to Owner</button>
                 </div>
             </section>
 
-            <!-- Shift Chart -->
-            <section class="analytics-card">
-                <div class="analytics-title">
-                    <span>Usage & Sales Breakdown (Shift: <span id="analytics-date-tag"></span>)</span>
-                </div>
-                <div class="chart-wrapper">
+            <!-- Order Request Filter Buttons -->
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <strong style="font-size:0.88rem; color:var(--text-primary);">Supply Order Board</strong>
+                <span id="pending-counter-tag" style="font-size:0.75rem; font-weight:800; color:var(--accent-amber);">0 Pending</span>
+            </div>
+
+            <!-- List of Order Requests -->
+            <div id="order-requests-list">
+                <!-- Dynamically populated -->
+            </div>
+        </div>
+
+        <!-- TAB 3: Reports & Backup -->
+        <div id="view-settings" class="tab-view">
+            <section class="rider-card" style="margin-bottom:12px;">
+                <strong style="font-size:0.9rem;">Shift Chart</strong>
+                <div style="height:250px; margin-top:8px;">
                     <canvas id="salesChart"></canvas>
                 </div>
             </section>
 
-            <!-- Backup Safety -->
-            <section class="analytics-card">
-                <div class="analytics-title">💾 Device Backup & Safety</div>
-                <div class="backup-controls">
-                    <button type="button" class="btn-backup" onclick="exportDataBackup()">📥 Download Backup (JSON)</button>
-                    <button type="button" class="btn-backup" onclick="document.getElementById('import-file').click()">📤 Restore Backup File</button>
+            <section class="rider-card">
+                <strong style="font-size:0.9rem;">💾 Backup & Sync</strong>
+                <p style="font-size:0.75rem; color:var(--text-muted); margin:6px 0 10px;">
+                    Download an offline backup anytime or restore across all connected devices.
+                </p>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                    <button type="button" class="btn-today" style="padding:10px;" onclick="exportDataBackup()">📥 Download Backup</button>
+                    <button type="button" class="btn-today" style="padding:10px;" onclick="document.getElementById('import-file').click()">📤 Restore Backup</button>
                     <input type="file" id="import-file" style="display:none" onchange="importDataBackup(event)">
-                    <button type="button" class="btn-backup" onclick="exportSalesCSV()">📊 Export Shifts to CSV</button>
-                    <button type="button" class="btn-backup btn-danger" onclick="restoreDefaults()">⚠️ Reset to Default All-Round Menu</button>
+                    <button type="button" class="btn-today" style="padding:10px; grid-column:span 2;" onclick="exportSalesCSV()">📊 Export CSV Report</button>
+                    <button type="button" class="btn-today" style="padding:10px; grid-column:span 2; background:#fee2e2; color:#b91c1c;" onclick="restoreDefaults()">⚠️ Reset Default Catalog</button>
                 </div>
             </section>
         </div>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <button type="button" class="btn-bottom-tab active" id="btn-tab-pos" onclick="switchTab('pos')">🛒 Inventory</button>
+            <button type="button" class="btn-bottom-tab" id="btn-tab-orders" onclick="switchTab('orders')">
+                📋 Orders <span id="orders-tab-badge" class="badge-count" style="display:none;">0</span>
+            </button>
+            <button type="button" class="btn-bottom-tab" id="btn-tab-settings" onclick="switchTab('settings')">📊 Reports</button>
+        </nav>
     </div>
 
-    <!-- Restock Alert / Shopping List Modal -->
+    <!-- Restock Modal -->
     <div class="modal-overlay" id="shopping-modal">
         <div class="modal-card">
-            <div class="modal-header">
-                <h2>🔔 Restock Required Items</h2>
-                <button type="button" class="btn-delete-card" onclick="closeShoppingListModal()">✕</button>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <strong style="color:#c2410c;">🔔 Low Stock Alert</strong>
+                <button type="button" class="counter-btn" onclick="closeShoppingListModal()">✕</button>
             </div>
-            <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:10px;">
-                Items currently at or below their reorder alert threshold:
-            </p>
-            <div class="modal-list-body" id="shopping-modal-body"></div>
-            <button type="button" class="btn-modal-close" onclick="closeShoppingListModal()">Done</button>
+            <div class="modal-body" id="shopping-modal-body"></div>
+            <button type="button" class="btn-today" style="padding:10px;" onclick="closeShoppingListModal()">Done</button>
         </div>
     </div>
 
@@ -1038,7 +866,6 @@
             measurementId: "G-J41JVDT5DF"
         };
 
-        // Initialize Firebase
         let db = null;
         let isFirebaseReady = false;
         try {
@@ -1046,37 +873,30 @@
             db = firebase.database();
             isFirebaseReady = true;
         } catch (err) {
-            console.warn("Firebase initialization warning:", err);
+            console.warn("Firebase Init Error:", err);
         }
 
         // ==========================================
-        // 2. STATE & DEFAULT RESTAURANT CATALOG
+        // 2. STATE & DEFAULT CATALOG
         // ==========================================
         const DEFAULT_CATEGORIES = ["All", "Breads & Buns", "Chicken & Meat", "Fries & Sides", "Cheese & Dairy", "Sauces & Packets", "Snacks", "Drinks"];
 
         const DEFAULT_ITEMS = [
-            // Breads
             { id: 'item_potato_buns', name: 'Potato Buns', category: 'Breads & Buns', icon: '🍞', unit: 'buns', stock: 120, reorderLevel: 30, lastModified: 'Preset' },
             { id: 'item_brioche_buns', name: 'Brioche Buns', category: 'Breads & Buns', icon: '🍞', unit: 'buns', stock: 80, reorderLevel: 25, lastModified: 'Preset' },
-            // Chicken & Meat
             { id: 'item_fried_chicken_fillets', name: 'Chicken Fillets', category: 'Chicken & Meat', icon: '🍗', unit: 'pcs', stock: 75, reorderLevel: 20, lastModified: 'Preset' },
             { id: 'item_smash_patties', name: 'Smash Beef/Chicken Patties', category: 'Chicken & Meat', icon: '🍗', unit: 'pcs', stock: 90, reorderLevel: 25, lastModified: 'Preset' },
             { id: 'item_chicken_tenders', name: 'Crispy Tenders', category: 'Chicken & Meat', icon: '🍗', unit: 'pcs', stock: 60, reorderLevel: 20, lastModified: 'Preset' },
-            // Fries & Sides
             { id: 'item_fries_pack', name: 'French Fries Cut', category: 'Fries & Sides', icon: '🍟', unit: 'portions', stock: 85, reorderLevel: 20, lastModified: 'Preset' },
-            // Cheese
             { id: 'item_cheddar_slices', name: 'Cheddar Cheese Slices', category: 'Cheese & Dairy', icon: '🧀', unit: 'slices', stock: 150, reorderLevel: 40, lastModified: 'Preset' },
-            // Sauces
-            { id: 'item_secret_sauce_packets', name: 'Stackd Special Sauce Packets', category: 'Sauces & Packets', icon: '🥫', unit: 'packets', stock: 200, reorderLevel: 50, lastModified: 'Preset' },
+            { id: 'item_secret_sauce_packets', name: 'Stackd Sauce Packets', category: 'Sauces & Packets', icon: '🥫', unit: 'packets', stock: 200, reorderLevel: 50, lastModified: 'Preset' },
             { id: 'item_garlic_mayo_packets', name: 'Garlic Mayo Packets', category: 'Sauces & Packets', icon: '🥫', unit: 'packets', stock: 180, reorderLevel: 40, lastModified: 'Preset' },
             { id: 'item_ketchup_packets', name: 'Ketchup Packets', category: 'Sauces & Packets', icon: '🥫', unit: 'packets', stock: 250, reorderLevel: 50, lastModified: 'Preset' },
-            // Snacks
             { id: 'item_kurkure', name: 'Kurkure', category: 'Snacks', icon: '🌶️', unit: 'packets', stock: 45, reorderLevel: 20, lastModified: 'Preset' },
             { id: 'item_classic_lays', name: 'Classic Lays', category: 'Snacks', icon: '🥔', unit: 'packets', stock: 45, reorderLevel: 20, lastModified: 'Preset' },
             { id: 'item_paprika', name: 'Paprika Lays', category: 'Snacks', icon: '🍿', unit: 'packets', stock: 35, reorderLevel: 20, lastModified: 'Preset' },
             { id: 'item_yogurt_herb', name: 'Yogurt & Herb Lays', category: 'Snacks', icon: '🌿', unit: 'packets', stock: 40, reorderLevel: 20, lastModified: 'Preset' },
             { id: 'item_wavy', name: 'Wavy Lays', category: 'Snacks', icon: '🍿', unit: 'packets', stock: 35, reorderLevel: 20, lastModified: 'Preset' },
-            // Drinks
             { id: 'item_pepsi', name: 'Pepsi', category: 'Drinks', icon: '🥤', unit: 'cans', stock: 60, reorderLevel: 20, lastModified: 'Preset' },
             { id: 'item_sprite', name: 'Sprite', category: 'Drinks', icon: '🥤', unit: 'cans', stock: 50, reorderLevel: 20, lastModified: 'Preset' },
             { id: 'item_water', name: 'Water', category: 'Drinks', icon: '💧', unit: 'bottles', stock: 100, reorderLevel: 20, lastModified: 'Preset' }
@@ -1085,18 +905,18 @@
         let state = {
             categories: DEFAULT_CATEGORIES,
             items: [],
-            shifts: {}
+            shifts: {},
+            orderRequests: [] // { id, itemId, itemName, icon, unit, qty, note, status: 'pending'|'ordered'|'received', time }
         };
 
         let selectedShiftDate = '';
         let activeCategory = 'All';
         let salesChartInstance = null;
+        let hasLoadedFromCloud = false;
 
         function calculateOperationalShift(dateObj = new Date()) {
             const d = new Date(dateObj);
-            if (d.getHours() < 4) {
-                d.setDate(d.getDate() - 1);
-            }
+            if (d.getHours() < 4) d.setDate(d.getDate() - 1);
             const yyyy = d.getFullYear();
             const mm = String(d.getMonth() + 1).padStart(2, '0');
             const dd = String(d.getDate()).padStart(2, '0');
@@ -1105,49 +925,50 @@
 
         function formatTimestamp() {
             const now = new Date();
-            return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ', ' + now.toLocaleDateString([], { month: 'short', day: 'numeric' });
+            return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         }
 
         // ==========================================
-        // 3. REALTIME SYNC & STORAGE
+        // 3. CLOUD SYNC & STORAGE
         // ==========================================
         function saveState() {
-            localStorage.setItem('STACKD_LIVE_STORE', JSON.stringify(state));
+            localStorage.setItem('STACKD_STORE_V7', JSON.stringify(state));
             if (isFirebaseReady && db) {
-                db.ref('pos_data').set(state);
+                document.getElementById('sync-text').textContent = "Syncing...";
+                document.getElementById('sync-badge').className = "live-status syncing";
+                db.ref('pos_data').set(state).then(() => {
+                    document.getElementById('sync-text').textContent = "Live Sync";
+                    document.getElementById('sync-badge').className = "live-status online";
+                }).catch(err => {
+                    console.error("Firebase write error:", err);
+                    document.getElementById('sync-text').textContent = "Offline/Local";
+                });
             }
         }
 
         function loadState() {
-            // Local fallback first
             try {
-                const saved = localStorage.getItem('STACKD_LIVE_STORE');
-                if (saved) {
-                    state = JSON.parse(saved);
-                }
-                if (!state.categories || state.categories.length === 0) {
-                    state.categories = [...DEFAULT_CATEGORIES];
-                }
-                if (!state.items || state.items.length === 0) {
-                    state.items = JSON.parse(JSON.stringify(DEFAULT_ITEMS));
-                }
-                if (!state.shifts) {
-                    state.shifts = {};
-                }
-            } catch (err) {
-                state = { categories: [...DEFAULT_CATEGORIES], items: JSON.parse(JSON.stringify(DEFAULT_ITEMS)), shifts: {} };
+                const saved = localStorage.getItem('STACKD_STORE_V7');
+                if (saved) state = JSON.parse(saved);
+                if (!state.items || state.items.length === 0) state.items = JSON.parse(JSON.stringify(DEFAULT_ITEMS));
+                if (!state.categories) state.categories = [...DEFAULT_CATEGORIES];
+                if (!state.shifts) state.shifts = {};
+                if (!state.orderRequests) state.orderRequests = [];
+            } catch (e) {
+                state = { categories: [...DEFAULT_CATEGORIES], items: JSON.parse(JSON.stringify(DEFAULT_ITEMS)), shifts: {}, orderRequests: [] };
             }
 
-            // Realtime Firebase Listener
             if (isFirebaseReady && db) {
                 db.ref('pos_data').on('value', (snapshot) => {
                     const cloudData = snapshot.val();
-                    if (cloudData && cloudData.items) {
+                    if (cloudData && cloudData.items && cloudData.items.length > 0) {
                         state = cloudData;
-                        localStorage.setItem('STACKD_LIVE_STORE', JSON.stringify(state));
+                        if (!state.orderRequests) state.orderRequests = [];
+                        localStorage.setItem('STACKD_STORE_V7', JSON.stringify(state));
+                        hasLoadedFromCloud = true;
                         renderPOS();
-                    } else {
-                        // First-time cloud initialization
+                        renderOrderRequests();
+                    } else if (!hasLoadedFromCloud) {
                         saveState();
                     }
                 });
@@ -1155,18 +976,12 @@
         }
 
         function getShiftData(shiftKey) {
-            if (!state.shifts[shiftKey]) {
-                state.shifts[shiftKey] = { used: {}, deliveries: { d60: 0, d100: 0, custom: [] } };
-            }
-            if (!state.shifts[shiftKey].used) {
-                state.shifts[shiftKey].used = {};
-            }
-            if (!state.shifts[shiftKey].deliveries || typeof state.shifts[shiftKey].deliveries !== 'object' || Array.isArray(state.shifts[shiftKey].deliveries)) {
+            if (!state.shifts[shiftKey]) state.shifts[shiftKey] = { used: {}, deliveries: { d60: 0, d100: 0, custom: [] } };
+            if (!state.shifts[shiftKey].used) state.shifts[shiftKey].used = {};
+            if (!state.shifts[shiftKey].deliveries || typeof state.shifts[shiftKey].deliveries !== 'object') {
                 state.shifts[shiftKey].deliveries = { d60: 0, d100: 0, custom: [] };
             }
-            if (!Array.isArray(state.shifts[shiftKey].deliveries.custom)) {
-                state.shifts[shiftKey].deliveries.custom = [];
-            }
+            if (!Array.isArray(state.shifts[shiftKey].deliveries.custom)) state.shifts[shiftKey].deliveries.custom = [];
             return state.shifts[shiftKey];
         }
 
@@ -1194,11 +1009,7 @@
         function addCustomDelivery() {
             const input = document.getElementById('custom-del-input');
             const val = parseInt(input.value, 10);
-            if (isNaN(val) || val <= 0) {
-                alert("Please enter a valid Rs. amount.");
-                input.focus();
-                return;
-            }
+            if (isNaN(val) || val <= 0) return;
             const shift = getShiftData(selectedShiftDate);
             shift.deliveries.custom.push(val);
             input.value = '';
@@ -1225,7 +1036,168 @@
             return { totalCash, totalTrips, count60, count100, customSum, customCount: customArr.length };
         }
 
-        // Render UI
+        // ==========================================
+        // 4. ORDER REQUEST WORKFLOW (NEW)
+        // ==========================================
+        function populateOrderRequestDropdown() {
+            const select = document.getElementById('req-item-select');
+            select.innerHTML = '';
+            state.items.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item.id;
+                opt.textContent = `${item.icon} ${item.name} (${item.unit})`;
+                select.appendChild(opt);
+            });
+        }
+
+        function submitOrderRequest() {
+            const itemId = document.getElementById('req-item-select').value;
+            const qty = parseInt(document.getElementById('req-qty-input').value, 10);
+            const note = document.getElementById('req-note-input').value.trim();
+
+            const item = state.items.find(i => i.id === itemId);
+            if (!item || isNaN(qty) || qty <= 0) {
+                alert("Please select a valid item and quantity.");
+                return;
+            }
+
+            const newRequest = {
+                id: 'req_' + Date.now(),
+                itemId: item.id,
+                itemName: item.name,
+                icon: item.icon,
+                unit: item.unit,
+                qty: qty,
+                note: note || 'None',
+                status: 'pending', // 'pending' | 'ordered' | 'received'
+                time: formatTimestamp(),
+                date: calculateOperationalShift()
+            };
+
+            if (!state.orderRequests) state.orderRequests = [];
+            state.orderRequests.unshift(newRequest);
+            saveState();
+
+            document.getElementById('req-note-input').value = '';
+            document.getElementById('req-qty-input').value = '10';
+
+            renderOrderRequests();
+            alert(`Order request for ${qty} ${item.unit} of ${item.name} sent!`);
+        }
+
+        function updateRequestStatus(reqId, newStatus) {
+            const req = state.orderRequests.find(r => r.id === reqId);
+            if (!req) return;
+
+            req.status = newStatus;
+
+            // If received, ask if stock should automatically increase
+            if (newStatus === 'received') {
+                if (confirm(`Stock Received! Do you want to automatically add ${req.qty} ${req.unit} to your current ${req.itemName} stock?`)) {
+                    const item = state.items.find(i => i.id === req.itemId);
+                    if (item) {
+                        item.stock += req.qty;
+                        item.lastModified = formatTimestamp();
+                    }
+                }
+            }
+
+            saveState();
+            renderOrderRequests();
+            renderPOS();
+        }
+
+        function deleteOrderRequest(reqId) {
+            if (confirm("Delete this request from the list?")) {
+                state.orderRequests = state.orderRequests.filter(r => r.id !== reqId);
+                saveState();
+                renderOrderRequests();
+            }
+        }
+
+        function renderOrderRequests() {
+            const container = document.getElementById('order-requests-list');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const requests = state.orderRequests || [];
+            let pendingCount = 0;
+
+            requests.forEach(r => {
+                if (r.status === 'pending') pendingCount++;
+            });
+
+            // Update badges
+            const tabBadge = document.getElementById('orders-tab-badge');
+            const pendingTag = document.getElementById('pending-counter-tag');
+
+            if (pendingCount > 0) {
+                tabBadge.style.display = 'inline-block';
+                tabBadge.textContent = pendingCount;
+                pendingTag.textContent = `${pendingCount} Pending`;
+            } else {
+                tabBadge.style.display = 'none';
+                pendingTag.textContent = `0 Pending`;
+            }
+
+            if (requests.length === 0) {
+                container.innerHTML = `<div style="text-align:center; padding:24px; color:var(--text-muted); font-size:0.85rem;">No order requests currently. All stocked up!</div>`;
+                return;
+            }
+
+            requests.forEach(req => {
+                const card = document.createElement('div');
+                card.className = `order-request-card ${req.status}`;
+
+                let statusBadge = '';
+                let actionButtons = '';
+
+                if (req.status === 'pending') {
+                    statusBadge = `<span class="request-status-pill pill-pending">Pending Request</span>`;
+                    actionButtons = `
+                        <button type="button" class="btn-status-act btn-act-order" onclick="updateRequestStatus('${req.id}', 'ordered')">📞 Mark as Ordered</button>
+                        <button type="button" class="btn-status-act btn-act-receive" onclick="updateRequestStatus('${req.id}', 'received')">✅ Received</button>
+                        <button type="button" class="btn-status-act btn-act-del" onclick="deleteOrderRequest('${req.id}')">✕</button>
+                    `;
+                } else if (req.status === 'ordered') {
+                    statusBadge = `<span class="request-status-pill pill-ordered">Order Placed</span>`;
+                    actionButtons = `
+                        <button type="button" class="btn-status-act btn-act-receive" onclick="updateRequestStatus('${req.id}', 'received')">✅ Mark Received</button>
+                        <button type="button" class="btn-status-act btn-act-del" onclick="deleteOrderRequest('${req.id}')">✕</button>
+                    `;
+                } else {
+                    statusBadge = `<span class="request-status-pill pill-received">Received & Stocked</span>`;
+                    actionButtons = `
+                        <button type="button" class="btn-status-act btn-act-del" style="flex:1;" onclick="deleteOrderRequest('${req.id}')">Clear Request</button>
+                    `;
+                }
+
+                card.innerHTML = `
+                    <div class="request-header">
+                        <div>
+                            <strong style="font-size:0.95rem;">${req.icon} ${req.itemName}</strong>
+                            <div style="font-size:0.75rem; color:var(--text-muted);">Requested: ${req.time} (${req.date})</div>
+                        </div>
+                        ${statusBadge}
+                    </div>
+
+                    <div style="font-size:0.9rem; font-weight:800; color:var(--brand-primary);">
+                        Required Amount: ${req.qty} ${req.unit}
+                    </div>
+
+                    ${req.note && req.note !== 'None' ? `<div class="request-note-box">💬 Note: ${req.note}</div>` : ''}
+
+                    <div class="request-actions-row">
+                        ${actionButtons}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // ==========================================
+        // 5. MAIN RENDER
+        // ==========================================
         function renderPOS() {
             if (!selectedShiftDate) {
                 selectedShiftDate = calculateOperationalShift();
@@ -1234,6 +1206,7 @@
 
             renderCategoryTabs();
             renderCategorySelect();
+            populateOrderRequestDropdown();
 
             const shift = getShiftData(selectedShiftDate);
             const riderStats = calculateRiderTotal(shift.deliveries);
@@ -1242,7 +1215,7 @@
             document.getElementById('count-d100').textContent = riderStats.count100;
             document.getElementById('custom-total-rs').textContent = `Rs. ${riderStats.customSum}`;
             document.getElementById('custom-count-display').textContent = riderStats.customCount;
-            document.getElementById('rider-payout-total-display').textContent = `Total Payout: Rs. ${riderStats.totalCash} (${riderStats.totalTrips} trips)`;
+            document.getElementById('rider-payout-total-display').textContent = `Rs. ${riderStats.totalCash} (${riderStats.totalTrips} trips)`;
 
             const grid = document.getElementById('inventory-grid');
             grid.innerHTML = '';
@@ -1266,66 +1239,38 @@
                 const isLow = item.stock <= item.reorderLevel && item.stock > 0;
                 const isOut = item.stock === 0;
 
-                let statusBadge = '';
-                if (isOut) {
-                    statusBadge = '<span class="status-badge out">Out of Stock</span>';
-                } else if (isLow) {
-                    statusBadge = `<span class="status-badge low">Low (≤ ${item.reorderLevel})</span>`;
-                }
-
                 const card = document.createElement('div');
                 card.className = `card ${isLow ? 'low-stock' : ''} ${isOut ? 'out-stock' : ''}`;
 
                 card.innerHTML = `
                     <div>
-                        <div class="card-top">
-                            <div style="display:flex; align-items:center;">
-                                <span class="card-icon">${item.icon || '📦'}</span>
-                                <span class="category-badge-pill">${item.category || 'General'}</span>
-                            </div>
-                            <div>
-                                ${statusBadge}
-                                <button type="button" class="btn-delete-card" title="Delete Item" onclick="confirmDeleteItem(${itemIndex})">✕</button>
-                            </div>
+                        <div class="card-header">
+                            <span class="card-icon">${item.icon || '📦'}</span>
+                            <button type="button" class="btn-del-item" onclick="confirmDeleteItem(${itemIndex})">✕</button>
                         </div>
                         <div class="card-name">${item.name}</div>
                     </div>
 
                     <div>
-                        <div class="stock-control-box">
-                            <span>Remaining</span>
+                        <div class="stock-box">
+                            <span>In Stock</span>
                             <div>
-                                <input type="number" class="stock-input" min="0" value="${item.stock}" 
-                                    onchange="updateDirectStock(${itemIndex}, this.value)"
-                                    onfocus="this.select()">
-                                <span style="font-size:0.75rem; color:#94a3b8; font-weight:700;">${item.unit || 'pcs'}</span>
+                                <input type="number" class="stock-input-mobile" value="${item.stock}" 
+                                    onchange="updateDirectStock(${itemIndex}, this.value)">
+                                <span style="font-size:0.65rem;">${item.unit || 'pcs'}</span>
                             </div>
                         </div>
 
-                        <div class="reorder-edit-box">
-                            <span>Reorder Alert Threshold:</span>
-                            <div>
-                                <input type="number" class="reorder-input" min="1" value="${item.reorderLevel}" 
-                                    onchange="updateReorderLevel(${itemIndex}, this.value)"
-                                    onfocus="this.select()">
-                                <span>${item.unit || 'pcs'}</span>
-                            </div>
-                        </div>
-
-                        <div class="shift-stats">
-                            <span>Used / Sold this shift:</span>
+                        <div class="used-label">
+                            <span>Used:</span>
                             <strong>${used} ${item.unit || 'pcs'}</strong>
                         </div>
 
-                        <span class="last-modified-tag">🕒 Last adjusted: ${item.lastModified || 'Not recorded'}</span>
-
                         <div class="card-actions">
-                            <button type="button" class="btn-used" onclick="recordUsage('${item.id}')" ${isOut ? 'disabled' : ''}>
-                                + 1 Used
+                            <button type="button" class="btn-plus" onclick="recordUsage('${item.id}')" ${isOut ? 'disabled' : ''}>
+                                + 1
                             </button>
-                            <button type="button" class="btn-undo" title="Undo usage" onclick="undoUsage('${item.id}')">
-                                ↩
-                            </button>
+                            <button type="button" class="btn-undo" onclick="undoUsage('${item.id}')">↩</button>
                         </div>
                     </div>
                 `;
@@ -1334,7 +1279,7 @@
 
             document.getElementById('kpi-total-stock').textContent = totalStock;
             document.getElementById('kpi-shift-sold').textContent = totalUsed;
-            document.getElementById('kpi-low-count').textContent = lowCount;
+            document.getElementById('kpi-low-count').textContent = `${lowCount} 🔔`;
         }
 
         function renderCategoryTabs() {
@@ -1343,7 +1288,7 @@
             state.categories.forEach(cat => {
                 const btn = document.createElement('button');
                 btn.type = 'button';
-                btn.className = `category-tab-btn ${cat === activeCategory ? 'active' : ''}`;
+                btn.className = `cat-btn ${cat === activeCategory ? 'active' : ''}`;
                 btn.textContent = cat;
                 btn.onclick = () => {
                     activeCategory = cat;
@@ -1364,7 +1309,6 @@
             });
         }
 
-        // Usage and Inventory Stock Update
         function recordUsage(itemId) {
             const item = state.items.find(i => i.id === itemId);
             if (item && item.stock > 0) {
@@ -1397,16 +1341,9 @@
             renderPOS();
         }
 
-        function updateReorderLevel(index, val) {
-            const parsed = parseInt(val, 10);
-            state.items[index].reorderLevel = isNaN(parsed) || parsed < 1 ? 1 : parsed;
-            saveState();
-            renderPOS();
-        }
-
         function confirmDeleteItem(index) {
             const item = state.items[index];
-            if (confirm(`SECURITY CHECK: Are you sure you want to remove "${item.name}" from the system?`)) {
+            if (confirm(`Remove "${item.name}"?`)) {
                 state.items.splice(index, 1);
                 saveState();
                 renderPOS();
@@ -1422,14 +1359,7 @@
             const reorderEl = document.getElementById('item-reorder-input');
 
             const name = nameEl.value.trim();
-            if (!name) {
-                alert("Please enter an item name.");
-                nameEl.focus();
-                return;
-            }
-
-            const stock = parseInt(stockEl.value, 10);
-            const reorder = parseInt(reorderEl.value, 10);
+            if (!name) return;
 
             const newItem = {
                 id: 'item_' + Date.now(),
@@ -1437,58 +1367,15 @@
                 category: catEl.value || 'General',
                 icon: iconEl.value || '📦',
                 unit: unitEl.value.trim() || 'pcs',
-                stock: isNaN(stock) || stock < 0 ? 0 : stock,
-                reorderLevel: isNaN(reorder) || reorder < 1 ? 20 : reorder,
+                stock: parseInt(stockEl.value, 10) || 0,
+                reorderLevel: parseInt(reorderEl.value, 10) || 20,
                 lastModified: formatTimestamp()
             };
 
             state.items.unshift(newItem);
             saveState();
-
             nameEl.value = '';
-            stockEl.value = '50';
-            reorderEl.value = '20';
-
             renderPOS();
-        }
-
-        function handleAddCategory() {
-            const input = document.getElementById('new-category-input');
-            const name = input.value.trim();
-            if (!name) return;
-            if (!state.categories.includes(name)) {
-                state.categories.push(name);
-                saveState();
-                input.value = '';
-                renderCategoryManagement();
-                renderCategoryTabs();
-                renderCategorySelect();
-            }
-        }
-
-        function removeCategory(name) {
-            if (name === 'All') return;
-            if (confirm(`Remove the category "${name}"?`)) {
-                state.categories = state.categories.filter(c => c !== name);
-                state.items.forEach(i => {
-                    if (i.category === name) i.category = 'General';
-                });
-                if (activeCategory === name) activeCategory = 'All';
-                saveState();
-                renderCategoryManagement();
-                renderPOS();
-            }
-        }
-
-        function renderCategoryManagement() {
-            const container = document.getElementById('category-management-list');
-            container.innerHTML = '';
-            state.categories.filter(c => c !== 'All').forEach(cat => {
-                const tag = document.createElement('div');
-                tag.className = 'category-tag';
-                tag.innerHTML = `<span>${cat}</span><button type="button" onclick="removeCategory('${cat}')">✕</button>`;
-                container.appendChild(tag);
-            });
         }
 
         function openShoppingListModal() {
@@ -1497,25 +1384,18 @@
             const lowItems = state.items.filter(i => i.stock <= i.reorderLevel);
 
             if (lowItems.length === 0) {
-                modalBody.innerHTML = '<p style="color:#10b981; font-weight:700; padding:12px; text-align:center;">All items are well stocked!</p>';
+                modalBody.innerHTML = '<p style="color:#10b981; font-weight:700; text-align:center;">All items in stock!</p>';
             } else {
                 lowItems.forEach(item => {
                     const row = document.createElement('div');
-                    row.className = 'modal-item-row';
+                    row.className = 'modal-row';
                     row.innerHTML = `
-                        <div>
-                            <strong>${item.icon} ${item.name}</strong>
-                            <div style="font-size:0.75rem; color:var(--text-muted);">${item.category}</div>
-                        </div>
-                        <div style="text-align:right;">
-                            <span style="color:var(--accent-rose); font-weight:800; font-size:1rem;">${item.stock} ${item.unit} left</span>
-                            <div style="font-size:0.75rem; color:var(--text-muted);">Reorder at: ${item.reorderLevel}</div>
-                        </div>
+                        <div><strong>${item.icon} ${item.name}</strong></div>
+                        <div style="color:var(--accent-rose); font-weight:800;">${item.stock} ${item.unit} left</div>
                     `;
                     modalBody.appendChild(row);
                 });
             }
-
             document.getElementById('shopping-modal').style.display = 'flex';
         }
 
@@ -1523,32 +1403,32 @@
             document.getElementById('shopping-modal').style.display = 'none';
         }
 
+        // Navigation Tabs
         function switchTab(tabName) {
             document.querySelectorAll('.tab-view').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.btn-nav').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.btn-bottom-tab').forEach(el => el.classList.remove('active'));
 
             if (tabName === 'pos') {
                 document.getElementById('view-pos').classList.add('active');
-                document.getElementById('tab-btn-pos').classList.add('active');
+                document.getElementById('btn-tab-pos').classList.add('active');
                 renderPOS();
+            } else if (tabName === 'orders') {
+                document.getElementById('view-orders').classList.add('active');
+                document.getElementById('btn-tab-orders').classList.add('active');
+                renderOrderRequests();
             } else {
                 document.getElementById('view-settings').classList.add('active');
-                document.getElementById('tab-btn-settings').classList.add('active');
-                renderCategoryManagement();
+                document.getElementById('btn-tab-settings').classList.add('active');
                 renderAnalytics();
             }
         }
 
         function renderAnalytics() {
-            document.getElementById('analytics-date-tag').textContent = selectedShiftDate;
             const shift = getShiftData(selectedShiftDate);
-
             const labels = [];
             const usedData = [];
-            const colors = ['#4f46e5', '#10b981', '#f59e0b', '#f43f5e', '#38bdf8', '#fb923c', '#a855f7', '#ec4899', '#06b6d4'];
-
             state.items.forEach(item => {
-                labels.push(`${item.icon} ${item.name}`);
+                labels.push(`${item.name}`);
                 usedData.push(shift.used[item.id] || 0);
             });
 
@@ -1559,20 +1439,12 @@
                 type: 'bar',
                 data: {
                     labels: labels,
-                    datasets: [{
-                        label: 'Units Used / Sold',
-                        data: usedData,
-                        backgroundColor: colors.slice(0, labels.length),
-                        borderRadius: 6
-                    }]
+                    datasets: [{ label: 'Units Used', data: usedData, backgroundColor: '#4f46e5', borderRadius: 4 }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    scales: {
-                        y: { beginAtZero: true, ticks: { precision: 0 } },
-                        x: { grid: { display: false } }
-                    },
+                    scales: { y: { beginAtZero: true } },
                     plugins: { legend: { display: false } }
                 }
             });
@@ -1580,27 +1452,26 @@
 
         function exportDataBackup() {
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
-            const downloadAnchor = document.createElement('a');
-            downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", `STACKD_Live_Backup_${calculateOperationalShift()}.json`);
-            document.body.appendChild(downloadAnchor);
-            downloadAnchor.click();
-            downloadAnchor.remove();
+            const a = document.createElement('a');
+            a.setAttribute("href", dataStr);
+            a.setAttribute("download", `STACKD_Backup_${calculateOperationalShift()}.json`);
+            a.click();
         }
 
         function importDataBackup(event) {
             const file = event.target.files[0];
             if (!file) return;
-
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
                     const parsed = JSON.parse(e.target.result);
                     if (parsed.items && parsed.shifts) {
                         state = parsed;
+                        if (!state.orderRequests) state.orderRequests = [];
                         saveState();
                         alert("Backup restored & synced to cloud!");
                         renderPOS();
+                        renderOrderRequests();
                     }
                 } catch (err) {
                     alert("Error restoring backup.");
@@ -1610,28 +1481,23 @@
         }
 
         function exportSalesCSV() {
-            let csv = "Shift Date,Item Name,Category,Units Used,Deliveries 60Rs,Deliveries 100Rs,Custom Deliveries Sum,Total Rider Payout\n";
+            let csv = "Shift Date,Item Name,Category,Units Used\n";
             for (const shiftKey in state.shifts) {
                 const shift = state.shifts[shiftKey];
-                const rStats = calculateRiderTotal(shift.deliveries || {});
                 for (const itemId in shift.used) {
                     const item = state.items.find(i => i.id === itemId);
-                    const name = item ? item.name : itemId;
-                    const cat = item ? item.category : 'General';
-                    csv += `"${shiftKey}","${name}","${cat}",${shift.used[itemId]},${rStats.count60},${rStats.count100},${rStats.customSum},${rStats.totalCash}\n`;
+                    csv += `"${shiftKey}","${item ? item.name : itemId}","${item ? item.category : 'General'}",${shift.used[itemId]}\n`;
                 }
             }
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.setAttribute("download", `STACKD_Kitchen_Report_${calculateOperationalShift()}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.setAttribute("download", `STACKD_Report_${calculateOperationalShift()}.csv`);
+            a.click();
         }
 
         function restoreDefaults() {
-            if (confirm("Restore full default menu? This will sync to all devices.")) {
+            if (confirm("Restore default menu?")) {
                 state.categories = [...DEFAULT_CATEGORIES];
                 state.items = JSON.parse(JSON.stringify(DEFAULT_ITEMS));
                 saveState();
