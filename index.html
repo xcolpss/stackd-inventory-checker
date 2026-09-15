@@ -3,12 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>STACKD Kitchen & Stock POS</title>
+    <title>STACKD POS, Ordering & Staff Portal</title>
     <!-- Firebase Realtime SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --bg-canvas: #f8fafc;
@@ -23,7 +21,6 @@
             --accent-rose-soft: #fff1f2;
             --accent-amber: #f59e0b;
             --accent-amber-soft: #fffdf5;
-            --accent-blue: #0284c7;
             --border-light: #e2e8f0;
         }
 
@@ -33,14 +30,13 @@
             padding: 0;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             -webkit-tap-highlight-color: transparent;
-            user-select: none;
         }
 
         body {
             background-color: var(--bg-canvas);
             color: var(--text-primary);
             padding: 10px;
-            padding-bottom: 75px;
+            padding-bottom: 85px;
             min-height: 100vh;
         }
 
@@ -49,7 +45,6 @@
             margin: 0 auto;
         }
 
-        /* Top Header */
         header {
             display: flex;
             justify-content: space-between;
@@ -113,7 +108,6 @@
             background: currentColor;
         }
 
-        /* Shift & Date Bar */
         .shift-bar {
             background: var(--card-surface);
             border: 1px solid var(--border-light);
@@ -134,14 +128,14 @@
             font-size: 0.82rem;
             font-weight: 700;
             outline: none;
-            max-width: 140px;
+            cursor: pointer;
         }
 
         .btn-today {
             background: #e0e7ff;
             color: var(--brand-primary);
             border: none;
-            padding: 6px 10px;
+            padding: 6px 12px;
             border-radius: 8px;
             font-size: 0.78rem;
             font-weight: 800;
@@ -149,10 +143,17 @@
             white-space: nowrap;
         }
 
-        /* Rider Payout Card */
-        .rider-card {
+        .tab-view {
+            display: none;
+        }
+
+        .tab-view.active {
+            display: block;
+        }
+
+        .box-card {
             background: #ffffff;
-            border: 1.5px solid #e0e7ff;
+            border: 1.5px solid var(--border-light);
             border-radius: 14px;
             padding: 12px;
             margin-bottom: 10px;
@@ -197,8 +198,8 @@
         }
 
         .counter-btn {
-            width: 34px;
-            height: 34px;
+            width: 32px;
+            height: 32px;
             border-radius: 8px;
             border: 1px solid var(--border-light);
             background: #ffffff;
@@ -208,6 +209,7 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
+            user-select: none;
         }
 
         .counter-btn:active {
@@ -215,24 +217,6 @@
             color: white;
         }
 
-        .custom-box {
-            grid-column: span 2;
-            display: flex;
-            gap: 6px;
-            background: #f8fafc;
-            border: 1px solid var(--border-light);
-            border-radius: 10px;
-            padding: 8px 10px;
-            align-items: center;
-        }
-
-        @media (max-width: 480px) {
-            .custom-box {
-                grid-column: span 1;
-            }
-        }
-
-        /* KPI Row */
         .kpi-row {
             display: grid;
             grid-template-columns: 1fr 1fr 1.2fr;
@@ -257,7 +241,7 @@
         }
 
         .kpi-pill strong {
-            font-size: 1.1rem;
+            font-size: 1.05rem;
             font-weight: 900;
         }
 
@@ -266,10 +250,8 @@
             border: 1px solid #fdba74;
             color: #c2410c;
             cursor: pointer;
-            width: 100%;
         }
 
-        /* Category Scroll Bar */
         .cat-scroll {
             display: flex;
             gap: 6px;
@@ -277,6 +259,7 @@
             padding-bottom: 6px;
             margin-bottom: 10px;
             scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
         }
 
         .cat-scroll::-webkit-scrollbar {
@@ -286,13 +269,14 @@
         .cat-btn {
             background: var(--card-surface);
             border: 1px solid var(--border-light);
-            padding: 7px 12px;
+            padding: 8px 14px;
             border-radius: 10px;
             font-size: 0.78rem;
             font-weight: 800;
             color: var(--text-muted);
             white-space: nowrap;
             cursor: pointer;
+            user-select: none;
         }
 
         .cat-btn.active {
@@ -301,59 +285,6 @@
             border-color: #0f172a;
         }
 
-        /* Accordion for Add Item */
-        .add-accordion {
-            background: var(--card-surface);
-            border: 1px solid var(--border-light);
-            border-radius: 12px;
-            margin-bottom: 10px;
-            overflow: hidden;
-        }
-
-        .add-accordion summary {
-            padding: 10px 14px;
-            font-size: 0.8rem;
-            font-weight: 800;
-            color: var(--brand-primary);
-            cursor: pointer;
-            list-style: none;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .add-form-grid {
-            padding: 10px 14px 14px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            border-top: 1px solid var(--border-light);
-        }
-
-        .input-box {
-            background: #f8fafc;
-            border: 1px solid var(--border-light);
-            padding: 8px 10px;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            width: 100%;
-            outline: none;
-        }
-
-        .btn-add-submit {
-            grid-column: span 2;
-            background: var(--brand-primary);
-            color: white;
-            border: none;
-            padding: 10px;
-            border-radius: 8px;
-            font-weight: 800;
-            font-size: 0.88rem;
-            cursor: pointer;
-        }
-
-        /* Mobile Inventory Cards */
         .inventory-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
@@ -362,7 +293,7 @@
 
         @media (min-width: 768px) {
             .inventory-grid {
-                grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
                 gap: 12px;
             }
         }
@@ -375,7 +306,6 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            position: relative;
         }
 
         .card.low-stock {
@@ -395,27 +325,23 @@
             margin-bottom: 6px;
         }
 
-        .card-icon {
-            font-size: 1.6rem;
-            line-height: 1;
-        }
-
-        .btn-del-item {
-            background: transparent;
-            border: none;
-            color: #cbd5e1;
-            font-size: 0.9rem;
-            padding: 2px 4px;
-            cursor: pointer;
-        }
-
         .card-name {
             font-size: 0.88rem;
             font-weight: 800;
             color: var(--text-primary);
             line-height: 1.2;
-            margin-bottom: 8px;
-            min-height: 28px;
+            margin-bottom: 6px;
+            min-height: 26px;
+        }
+
+        .price-badge-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 6px;
         }
 
         .stock-box {
@@ -429,14 +355,8 @@
             margin-bottom: 6px;
         }
 
-        .stock-box span {
-            font-size: 0.68rem;
-            font-weight: 700;
-            color: var(--text-muted);
-        }
-
         .stock-input-mobile {
-            width: 50px;
+            width: 55px;
             background: white;
             border: 1px solid var(--border-light);
             border-radius: 6px;
@@ -444,19 +364,6 @@
             font-size: 0.88rem;
             font-weight: 800;
             text-align: center;
-        }
-
-        .used-label {
-            font-size: 0.72rem;
-            font-weight: 700;
-            color: var(--text-muted);
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-        }
-
-        .used-label strong {
-            color: var(--accent-emerald);
         }
 
         .card-actions {
@@ -469,17 +376,12 @@
             background: #ecfdf5;
             color: #047857;
             border: 1px solid #a7f3d0;
-            padding: 10px 6px;
+            padding: 9px 6px;
             border-radius: 8px;
             font-weight: 900;
             font-size: 0.95rem;
             cursor: pointer;
-            touch-action: manipulation;
-        }
-
-        .btn-plus:active {
-            background: #10b981;
-            color: white;
+            user-select: none;
         }
 
         .btn-undo {
@@ -490,44 +392,289 @@
             border-radius: 8px;
             font-weight: 800;
             cursor: pointer;
+            user-select: none;
         }
 
-        /* Order Requests Tab Styles */
-        .order-request-card {
-            background: #ffffff;
+        .order-summary-card {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            color: #ffffff;
+            border-radius: 14px;
+            padding: 14px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+        }
+
+        .order-summary-total {
+            font-size: 1.4rem;
+            font-weight: 900;
+            color: #facc15;
+        }
+
+        .order-items-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 8px;
+        }
+
+        @media (min-width: 768px) {
+            .order-items-grid {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                gap: 10px;
+            }
+        }
+
+        .order-card {
+            background: var(--card-surface);
             border: 1.5px solid var(--border-light);
             border-radius: 12px;
-            padding: 12px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .order-card.selected {
+            border-color: var(--brand-primary);
+            background: #f5f3ff;
+            box-shadow: 0 2px 6px rgba(79, 70, 229, 0.12);
+        }
+
+        .order-card-title {
+            font-size: 0.85rem;
+            font-weight: 800;
+            margin-bottom: 4px;
+            line-height: 1.2;
+        }
+
+        .order-unit-price {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .editable-price-input {
+            width: 65px;
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+            padding: 2px 4px;
+            font-weight: 700;
+            font-size: 0.75rem;
+            text-align: center;
+            background: #ffffff;
+        }
+
+        .order-qty-controller {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f8fafc;
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            padding: 4px 6px;
+            gap: 4px;
+        }
+
+        .order-qty-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            border: 1px solid var(--border-light);
+            background: #ffffff;
+            font-size: 1rem;
+            font-weight: 900;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+        }
+
+        .order-qty-input {
+            width: 52px;
+            border: 1px solid var(--border-light);
+            border-radius: 6px;
+            padding: 3px 2px;
+            font-weight: 900;
+            font-size: 0.9rem;
+            text-align: center;
+            color: var(--brand-primary);
+            background: #ffffff;
+        }
+
+        /* Clickable Saved Order Cards & Category Breakdown */
+        .order-history-card {
+            background: var(--card-surface);
+            border: 1.5px solid var(--border-light);
+            border-radius: 14px;
+            padding: 12px 14px;
             margin-bottom: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .order-history-card.pending {
+            border-left: 6px solid var(--accent-amber);
+        }
+
+        .order-history-card.received {
+            border-left: 6px solid var(--accent-emerald);
+            background: #f0fdf4;
+        }
+
+        .order-history-card:hover {
+            border-color: var(--brand-primary);
+        }
+
+        .history-top-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .history-title-amount {
+            font-size: 1.15rem;
+            font-weight: 900;
+            color: var(--text-primary);
+        }
+
+        .status-badge {
+            font-size: 0.7rem;
+            font-weight: 900;
+            padding: 3px 8px;
+            border-radius: 6px;
+            text-transform: uppercase;
+        }
+
+        .badge-pending {
+            background: #fef3c7;
+            color: #b45309;
+        }
+
+        .badge-received {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .history-flat-summary {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+            margin-bottom: 8px;
+        }
+
+        .category-breakdown-container {
+            display: none;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed var(--border-light);
+        }
+
+        .order-history-card.expanded .category-breakdown-container {
+            display: block;
+        }
+
+        .category-block {
+            background: #f8fafc;
+            border: 1px solid var(--border-light);
+            border-radius: 10px;
+            padding: 8px 10px;
+            margin-bottom: 6px;
+        }
+
+        .category-block-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            font-weight: 800;
+            color: var(--brand-primary);
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 4px;
+            margin-bottom: 4px;
+        }
+
+        .category-block-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--text-primary);
+            padding: 2px 0;
+        }
+
+        .order-card-buttons {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        .btn-order-action {
+            border: none;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-whatsapp {
+            background: #25D366;
+            color: #ffffff;
+        }
+
+        .btn-received-act {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+
+        .btn-edit-act {
+            background: #e0f2fe;
+            color: #0284c7;
+        }
+
+        .btn-del-act {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        /* Staff Attendance */
+        .staff-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .staff-card {
+            background: var(--card-surface);
+            border: 1.5px solid var(--border-light);
+            border-radius: 14px;
+            padding: 12px 14px;
             display: flex;
             flex-direction: column;
             gap: 8px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
         }
 
-        .order-request-card.pending {
-            border-left: 5px solid var(--accent-amber);
-            background: #fffdf8;
-        }
-
-        .order-request-card.ordered {
-            border-left: 5px solid var(--accent-blue);
-            background: #f0f9ff;
-        }
-
-        .order-request-card.received {
-            border-left: 5px solid var(--accent-emerald);
-            background: #f0fdf4;
-            opacity: 0.85;
-        }
-
-        .request-header {
+        .staff-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
 
-        .request-status-pill {
+        .staff-status-pill {
             font-size: 0.68rem;
             font-weight: 900;
             padding: 3px 8px;
@@ -535,41 +682,50 @@
             text-transform: uppercase;
         }
 
-        .pill-pending { background: #fef3c7; color: #b45309; }
-        .pill-ordered { background: #e0f2fe; color: #0369a1; }
-        .pill-received { background: #dcfce7; color: #15803d; }
+        .pill-in { background: #dcfce7; color: #16a34a; }
+        .pill-out { background: #f1f5f9; color: #64748b; }
 
-        .request-note-box {
-            background: rgba(0,0,0,0.03);
-            border-radius: 8px;
-            padding: 6px 10px;
-            font-size: 0.78rem;
-            color: var(--text-primary);
-            font-style: italic;
-        }
-
-        .request-actions-row {
-            display: flex;
+        .staff-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             gap: 6px;
-            margin-top: 4px;
         }
 
-        .btn-status-act {
-            flex: 1;
-            padding: 7px 10px;
+        .btn-clock-in {
+            background: #dcfce7;
+            color: #15803d;
+            border: 1px solid #bbf7d0;
+            padding: 8px;
             border-radius: 8px;
-            font-size: 0.75rem;
             font-weight: 800;
-            border: none;
+            font-size: 0.8rem;
             cursor: pointer;
-            text-align: center;
         }
 
-        .btn-act-order { background: #e0f2fe; color: #0284c7; }
-        .btn-act-receive { background: #dcfce7; color: #16a34a; }
-        .btn-act-del { background: #fee2e2; color: #dc2626; flex: 0 0 35px; }
+        .btn-clock-out {
+            background: #fee2e2;
+            color: #b91c1c;
+            border: 1px solid #fecaca;
+            padding: 8px;
+            border-radius: 8px;
+            font-weight: 800;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
 
-        /* Bottom Tab Bar for Mobile */
+        .log-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.78rem;
+            margin-top: 8px;
+        }
+
+        .log-table th, .log-table td {
+            padding: 6px 8px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-light);
+        }
+
         .bottom-nav {
             position: fixed;
             bottom: 0;
@@ -590,12 +746,13 @@
             border: none;
             padding: 8px 4px;
             border-radius: 8px;
-            font-size: 0.75rem;
+            font-size: 0.72rem;
             font-weight: 800;
             color: var(--text-muted);
             cursor: pointer;
             text-align: center;
             white-space: nowrap;
+            user-select: none;
         }
 
         .btn-bottom-tab.active {
@@ -612,15 +769,17 @@
             margin-left: 3px;
         }
 
-        .tab-view {
-            display: none;
+        .input-box {
+            background: #f8fafc;
+            border: 1px solid var(--border-light);
+            padding: 8px 10px;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            outline: none;
+            width: 100%;
         }
 
-        .tab-view.active {
-            display: block;
-        }
-
-        /* Modal */
         .modal-overlay {
             position: fixed;
             inset: 0;
@@ -638,22 +797,10 @@
             border-radius: 16px;
             padding: 16px;
             width: 100%;
-            max-width: 400px;
-            max-height: 80vh;
+            max-width: 440px;
+            max-height: 85vh;
             display: flex;
             flex-direction: column;
-        }
-
-        .modal-body {
-            overflow-y: auto;
-            margin: 10px 0;
-        }
-
-        .modal-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid #f1f5f9;
         }
     </style>
 </head>
@@ -665,7 +812,7 @@
             <div class="brand-block">
                 <div class="brand-badge">STACKD</div>
                 <div class="header-title">
-                    <h1>Kitchen & Orders</h1>
+                    <h1>Kitchen & Staff Portal</h1>
                 </div>
             </div>
             <div id="sync-badge" class="live-status online">
@@ -673,7 +820,9 @@
             </div>
         </header>
 
-        <!-- TAB 1: POS / Stock -->
+        <!-- ==============================================
+             TAB 1: POS / INVENTORY COUNTER
+             ============================================== -->
         <div id="view-pos" class="tab-view active">
             <!-- Shift Picker -->
             <section class="shift-bar">
@@ -681,11 +830,11 @@
                     <span style="font-size:0.75rem; font-weight:800; color:var(--text-muted);">SHIFT:</span>
                     <input type="date" id="selected-shift-date" class="date-picker-input" onchange="handleDateChange(this.value)">
                 </div>
-                <button type="button" class="btn-today" onclick="setShiftToNow()">Current Shift</button>
+                <button type="button" class="btn-today" onclick="setShiftToNow()">Current Shift (2PM - 4AM)</button>
             </section>
 
             <!-- Rider Deliveries Section -->
-            <section class="rider-card">
+            <section class="box-card">
                 <div class="rider-header">
                     <strong style="font-size:0.88rem; color:#1e1b4b;">🛵 Rider Settlement</strong>
                     <div class="payout-badge" id="rider-payout-total-display">Rs. 0 (0 trips)</div>
@@ -715,14 +864,14 @@
                         </div>
                     </div>
 
-                    <div class="custom-box">
+                    <div class="rider-tier" style="grid-column: span 2;">
                         <div style="flex:1;">
-                            <div style="font-size:0.78rem; font-weight:800;">Custom Rs.</div>
-                            <div style="font-size:0.65rem; color:var(--text-muted);">Total: <strong id="custom-total-rs">Rs. 0</strong> (<span id="custom-count-display">0</span>)</div>
+                            <div style="font-size:0.78rem; font-weight:800;">Custom Deliveries</div>
+                            <div style="font-size:0.65rem; color:var(--text-muted);">Total: <strong id="custom-total-rs">Rs. 0</strong> (<span id="custom-count-display">0</span> trips)</div>
                         </div>
                         <input type="number" class="input-box" style="width:75px; padding:6px;" id="custom-del-input" placeholder="Rs.">
-                        <button type="button" class="btn-today" onclick="addCustomDelivery()">+ Add</button>
-                        <button type="button" class="counter-btn" style="width:28px; height:28px;" onclick="undoCustomDelivery()">↩</button>
+                        <button type="button" class="btn-today" style="margin-left:4px;" onclick="addCustomDelivery()">+ Add</button>
+                        <button type="button" class="counter-btn" style="width:28px; height:28px; margin-left:4px;" onclick="undoCustomDelivery()">↩</button>
                     </div>
                 </div>
             </section>
@@ -734,7 +883,7 @@
                     <strong id="kpi-total-stock">0</strong>
                 </div>
                 <div class="kpi-pill">
-                    <span>Used / Sold</span>
+                    <span>Used This Shift</span>
                     <strong id="kpi-shift-sold" style="color:var(--accent-emerald)">0</strong>
                 </div>
                 <button type="button" class="kpi-pill btn-alert-pill" onclick="openShoppingListModal()">
@@ -747,107 +896,144 @@
             <div class="cat-scroll" id="category-tab-bar"></div>
 
             <!-- Add Item Accordion -->
-            <details class="add-accordion">
-                <summary>
-                    <span>+ Add New Menu Item / Raw Material</span>
-                    <span>▼</span>
-                </summary>
-                <div class="add-form-grid">
-                    <select class="input-box" id="item-category-select"></select>
-                    <select class="input-box" id="item-icon-select">
-                        <option value="🍗">🍗 Chicken</option>
-                        <option value="🧀">🧀 Cheese</option>
-                        <option value="🍞">🍞 Buns</option>
-                        <option value="🍟">🍟 Fries</option>
-                        <option value="🥫">🥫 Sauce</option>
-                        <option value="🥤">🥤 Drink</option>
-                        <option value="💧">💧 Water</option>
-                        <option value="🌶️">🌶️ Kurkure</option>
-                        <option value="🥔">🥔 Chips</option>
-                        <option value="📦">📦 Supply</option>
-                    </select>
-                    <input type="text" class="input-box" id="item-name-input" placeholder="Item Name">
-                    <input type="text" class="input-box" id="item-unit-input" placeholder="Unit (pcs/buns/kg)" value="pcs">
-                    <input type="number" class="input-box" id="item-stock-input" placeholder="Stock Count" value="50">
-                    <input type="number" class="input-box" id="item-reorder-input" placeholder="Alert Threshold" value="20">
-                    <button type="button" class="btn-add-submit" onclick="handleAddItem()">Add to Menu & Sync</button>
+            <details class="box-card" style="margin-bottom:10px; padding:8px 12px;">
+                <summary style="font-size:0.8rem; font-weight:800; color:var(--brand-primary); cursor:pointer;">+ Add New Menu Item / Supply</summary>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:8px;">
+                    <select class="input-box" id="new-item-cat"></select>
+                    <input type="text" class="input-box" id="new-item-name" placeholder="Item Name">
+                    <input type="number" class="input-box" id="new-item-price" placeholder="Price (Rs.)" value="100">
+                    <input type="text" class="input-box" id="new-item-unit" placeholder="Unit (pcs/packets)" value="pcs">
+                    <input type="number" class="input-box" id="new-item-stock" placeholder="Initial Stock" value="50">
+                    <input type="number" class="input-box" id="new-item-reorder" placeholder="Reorder Alert Level" value="10">
+                    <button type="button" class="btn-today" style="grid-column: span 2; padding:10px;" onclick="handleAddItem()">Add to System & Sync</button>
                 </div>
             </details>
 
-            <!-- Main Grid -->
+            <!-- Main Inventory Grid -->
             <main class="inventory-grid" id="inventory-grid"></main>
         </div>
 
-        <!-- TAB 2: Order Requests (Staff & Restock Workflow) -->
+        <!-- ==============================================
+             TAB 2: ORDERING & RESTOCK BILL CALCULATOR
+             ============================================== -->
         <div id="view-orders" class="tab-view">
-            <!-- New Request Form -->
-            <section class="rider-card">
-                <strong style="font-size:0.95rem; color:#1e1b4b; display:block; margin-bottom:8px;">📝 Request Supplies / New Stock</strong>
-                <div style="display:flex; flex-direction:column; gap:8px;">
-                    <div style="display:grid; grid-template-columns:1.5fr 1fr; gap:6px;">
-                        <select class="input-box" id="req-item-select"></select>
-                        <input type="number" class="input-box" id="req-qty-input" placeholder="Qty needed" min="1" value="10">
-                    </div>
-                    <input type="text" class="input-box" id="req-note-input" placeholder="Add note (e.g. urgent, brand preference, vendor)">
-                    <button type="button" class="btn-today" style="padding:10px; font-size:0.85rem;" onclick="submitOrderRequest()">📢 Send Request to Owner</button>
+            <!-- Order Bill Summary Bar -->
+            <section class="order-summary-card">
+                <div>
+                    <span style="font-size:0.75rem; text-transform:uppercase; font-weight:800; color:#cbd5e1;">Draft Order (Live Subtotal)</span>
+                    <div class="order-summary-total" id="order-bill-total">Rs. 0</div>
+                    <span style="font-size:0.75rem; color:#cbd5e1;" id="order-items-count">0 items selected</span>
+                </div>
+                <div style="display:flex; gap:6px;">
+                    <button type="button" class="btn-today" style="background:#facc15; color:#0f172a;" onclick="saveTodaysOrder()">💾 Save Order</button>
+                    <button type="button" class="btn-today" style="background:#334155; color:#ffffff;" onclick="clearCurrentOrder()">Clear</button>
                 </div>
             </section>
 
-            <!-- Order Request Filter Buttons -->
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                <strong style="font-size:0.88rem; color:var(--text-primary);">Supply Order Board</strong>
-                <span id="pending-counter-tag" style="font-size:0.75rem; font-weight:800; color:var(--accent-amber);">0 Pending</span>
-            </div>
+            <!-- Category Filters for Ordering -->
+            <div class="cat-scroll" id="order-category-bar"></div>
 
-            <!-- List of Order Requests -->
-            <div id="order-requests-list">
-                <!-- Dynamically populated -->
+            <!-- Visual Tap-to-Order Grid -->
+            <div class="order-items-grid" id="order-items-grid"></div>
+
+            <!-- Saved Orders History -->
+            <div style="margin-top:16px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <strong style="font-size:0.92rem; color:var(--text-primary);">📜 Today's Saved Order History</strong>
+                    <span style="font-size:0.72rem; color:var(--text-muted);">Tap any card to view category breakdown</span>
+                </div>
+                <div id="saved-orders-list"></div>
             </div>
         </div>
 
-        <!-- TAB 3: Reports & Backup -->
-        <div id="view-settings" class="tab-view">
-            <section class="rider-card" style="margin-bottom:12px;">
-                <strong style="font-size:0.9rem;">Shift Chart</strong>
-                <div style="height:250px; margin-top:8px;">
-                    <canvas id="salesChart"></canvas>
+        <!-- ==============================================
+             TAB 3: EMPLOYEE ATTENDANCE
+             ============================================== -->
+        <div id="view-staff" class="tab-view">
+            <div class="box-card">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <strong style="font-size:0.95rem; color:#1e1b4b;">⏱️ Staff Clock-In / Clock-Out</strong>
+                    <button type="button" class="btn-today" onclick="openStaffModal()">+ Add Staff</button>
                 </div>
-            </section>
+                <p style="font-size:0.75rem; color:var(--text-muted); margin-bottom:12px;">
+                    Track daily arrival & departure times for shifts. All timestamps sync across devices.
+                </p>
 
-            <section class="rider-card">
-                <strong style="font-size:0.9rem;">💾 Backup & Sync</strong>
+                <div class="staff-grid" id="staff-grid"></div>
+            </div>
+
+            <div class="box-card">
+                <strong style="font-size:0.88rem; color:#1e1b4b; display:block; margin-bottom:8px;">📅 Shift Attendance Log</strong>
+                <div style="overflow-x:auto;">
+                    <table class="log-table">
+                        <thead>
+                            <tr>
+                                <th>Staff Name</th>
+                                <th>Clock In</th>
+                                <th>Clock Out</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendance-log-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==============================================
+             TAB 4: REPORTS & BACKUPS
+             ============================================== -->
+        <div id="view-settings" class="tab-view">
+            <section class="box-card">
+                <strong style="font-size:0.9rem;">💾 Device & Cloud Backup</strong>
                 <p style="font-size:0.75rem; color:var(--text-muted); margin:6px 0 10px;">
-                    Download an offline backup anytime or restore across all connected devices.
+                    Download an offline JSON backup or export your operational reports to CSV.
                 </p>
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
                     <button type="button" class="btn-today" style="padding:10px;" onclick="exportDataBackup()">📥 Download Backup</button>
                     <button type="button" class="btn-today" style="padding:10px;" onclick="document.getElementById('import-file').click()">📤 Restore Backup</button>
                     <input type="file" id="import-file" style="display:none" onchange="importDataBackup(event)">
                     <button type="button" class="btn-today" style="padding:10px; grid-column:span 2;" onclick="exportSalesCSV()">📊 Export CSV Report</button>
-                    <button type="button" class="btn-today" style="padding:10px; grid-column:span 2; background:#fee2e2; color:#b91c1c;" onclick="restoreDefaults()">⚠️ Reset Default Catalog</button>
+                    <button type="button" class="btn-today" style="padding:10px; grid-column:span 2; background:#fee2e2; color:#b91c1c;" onclick="restoreDefaults()">⚠️ Reset to Fresh Setup</button>
                 </div>
             </section>
         </div>
 
-        <!-- Bottom Navigation -->
+        <!-- Bottom Mobile Bar -->
         <nav class="bottom-nav">
             <button type="button" class="btn-bottom-tab active" id="btn-tab-pos" onclick="switchTab('pos')">🛒 Inventory</button>
             <button type="button" class="btn-bottom-tab" id="btn-tab-orders" onclick="switchTab('orders')">
-                📋 Orders <span id="orders-tab-badge" class="badge-count" style="display:none;">0</span>
+                📦 Order Stock <span id="orders-badge-count" class="badge-count" style="display:none;">0</span>
             </button>
+            <button type="button" class="btn-bottom-tab" id="btn-tab-staff" onclick="switchTab('staff')">👥 Staff</button>
             <button type="button" class="btn-bottom-tab" id="btn-tab-settings" onclick="switchTab('settings')">📊 Reports</button>
         </nav>
     </div>
 
-    <!-- Restock Modal -->
+    <!-- Restock Alert Modal -->
     <div class="modal-overlay" id="shopping-modal">
         <div class="modal-card">
             <div style="display:flex; justify-content:space-between; align-items:center;">
                 <strong style="color:#c2410c;">🔔 Low Stock Alert</strong>
                 <button type="button" class="counter-btn" onclick="closeShoppingListModal()">✕</button>
             </div>
-            <div class="modal-body" id="shopping-modal-body"></div>
+            <div class="modal-body" id="shopping-modal-body" style="margin:10px 0; max-height:60vh; overflow-y:auto;"></div>
             <button type="button" class="btn-today" style="padding:10px;" onclick="closeShoppingListModal()">Done</button>
+        </div>
+    </div>
+
+    <!-- Add Staff Modal -->
+    <div class="modal-overlay" id="staff-modal">
+        <div class="modal-card">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <strong>Add / Edit Staff Member</strong>
+                <button type="button" class="counter-btn" onclick="closeStaffModal()">✕</button>
+            </div>
+            <div style="margin:12px 0; display:flex; flex-direction:column; gap:8px;">
+                <input type="text" class="input-box" id="new-staff-name" placeholder="Employee Name (e.g. Ali)">
+                <input type="text" class="input-box" id="new-staff-role" placeholder="Role" value="Kitchen / Staff">
+            </div>
+            <button type="button" class="btn-today" style="padding:10px;" onclick="handleAddStaff()">Save Staff Member</button>
         </div>
     </div>
 
@@ -877,41 +1063,162 @@
         }
 
         // ==========================================
-        // 2. STATE & DEFAULT CATALOG
+        // 2. MASTER PRICE LOOKUP & CATALOG
         // ==========================================
-        const DEFAULT_CATEGORIES = ["All", "Breads & Buns", "Chicken & Meat", "Fries & Sides", "Cheese & Dairy", "Sauces & Packets", "Snacks", "Drinks"];
+        // Exact pricing dictionary mapping names and aliases directly
+        const MASTER_PRICES = {
+            "tikka": 1357,
+            "fajita": 1357,
+            "peri peri": 1357,
+            "mughlai": 1357,
+            "mughali": 1357,
+            "grilled chicken": 1357,
+            "grilled": 1357,
+            "chicken strips": 1150,
+            "strips": 1150,
+            "pepporoni": 270,
+            "pepperoni": 270,
+            "fries": 400,
+            "fries packet": 400,
+            "jalapeno can": 1450,
+            "jalapeno": 1450,
+            "olives can": 2200,
+            "olives": 2200,
+            "sweet corn can": 500,
+            "sweet corn": 500,
+            "bread": 75,
+            "bread / bun": 75,
+            "bread sticks": 75,
+            "bun": 75,
+            "wrap": 325,
+            "wraps": 325,
+            "cheese slice": 1250,
+            "cheese block": 3230,
+            "butter": 500,
+            "bbq": 3326,
+            "bbq 4000ml x 4 pouch": 3326,
+            "buffalo": 3058,
+            "buffalo hot 4000ml x 4 gallon": 3058,
+            "chipotle": 3959,
+            "chipotle sauce 4000ml x 4 gallon": 3959,
+            "habanero": 5555,
+            "habanero sauce 4000ml x 4 pouch": 5555,
+            "honey mustard": 4505,
+            "honey mustard 4000ml x 4 pouch": 4505,
+            "mustard": 4505,
+            "hot sauce": 2279,
+            "hot sauce 4000ml x 4 gallon": 2279,
+            "pizza sauce": 2546,
+            "thousand": 2916,
+            "thousand island": 2916,
+            "classic mayo": 2251,
+            "mc mayo": 2419,
+            "real mayo": 3824,
+            "spicy mayo": 3520,
+            "chilli garlic": 1618,
+            "ketchup": 1618,
+            "kectup": 1618,
+            "garlic mayo": 1800,
+            "sriracha mayo": 741,
+            "mc mayo bbq": 811,
+            "kurkure": 70,
+            "classic lays": 70,
+            "paprika": 70,
+            "youguert and herb": 70,
+            "yogurt and herb": 70,
+            "wavy twist": 70,
+            "wavy": 70,
+            "vibes": 70,
+            "masala lays": 70,
+            "pepsi": 62,
+            "sprite": 62,
+            "7up": 62,
+            "water": 40
+        };
+
+        function getPriceForName(name, currentPrice = 0) {
+            if (currentPrice && currentPrice > 0) return currentPrice;
+            const clean = (name || '').trim().toLowerCase();
+            if (MASTER_PRICES[clean] !== undefined) return MASTER_PRICES[clean];
+            for (const key in MASTER_PRICES) {
+                if (clean.includes(key) || key.includes(clean)) {
+                    return MASTER_PRICES[key];
+                }
+            }
+            return 0;
+        }
+
+        const DEFAULT_CATEGORIES = [
+            "All",
+            "Chicken & Meat",
+            "Sauces & Mayo",
+            "Breads & Wraps",
+            "Cheese & Dairy",
+            "Cans & Veggies",
+            "Snacks",
+            "Drinks",
+            "Fries & Sides",
+            "Sauces & Packets",
+            "Breads & Buns"
+        ];
 
         const DEFAULT_ITEMS = [
-            { id: 'item_potato_buns', name: 'Potato Buns', category: 'Breads & Buns', icon: '🍞', unit: 'buns', stock: 120, reorderLevel: 30, lastModified: 'Preset' },
-            { id: 'item_brioche_buns', name: 'Brioche Buns', category: 'Breads & Buns', icon: '🍞', unit: 'buns', stock: 80, reorderLevel: 25, lastModified: 'Preset' },
-            { id: 'item_fried_chicken_fillets', name: 'Chicken Fillets', category: 'Chicken & Meat', icon: '🍗', unit: 'pcs', stock: 75, reorderLevel: 20, lastModified: 'Preset' },
-            { id: 'item_smash_patties', name: 'Smash Beef/Chicken Patties', category: 'Chicken & Meat', icon: '🍗', unit: 'pcs', stock: 90, reorderLevel: 25, lastModified: 'Preset' },
-            { id: 'item_chicken_tenders', name: 'Crispy Tenders', category: 'Chicken & Meat', icon: '🍗', unit: 'pcs', stock: 60, reorderLevel: 20, lastModified: 'Preset' },
-            { id: 'item_fries_pack', name: 'French Fries Cut', category: 'Fries & Sides', icon: '🍟', unit: 'portions', stock: 85, reorderLevel: 20, lastModified: 'Preset' },
-            { id: 'item_cheddar_slices', name: 'Cheddar Cheese Slices', category: 'Cheese & Dairy', icon: '🧀', unit: 'slices', stock: 150, reorderLevel: 40, lastModified: 'Preset' },
-            { id: 'item_secret_sauce_packets', name: 'Stackd Sauce Packets', category: 'Sauces & Packets', icon: '🥫', unit: 'packets', stock: 200, reorderLevel: 50, lastModified: 'Preset' },
-            { id: 'item_garlic_mayo_packets', name: 'Garlic Mayo Packets', category: 'Sauces & Packets', icon: '🥫', unit: 'packets', stock: 180, reorderLevel: 40, lastModified: 'Preset' },
-            { id: 'item_ketchup_packets', name: 'Ketchup Packets', category: 'Sauces & Packets', icon: '🥫', unit: 'packets', stock: 250, reorderLevel: 50, lastModified: 'Preset' },
-            { id: 'item_kurkure', name: 'Kurkure', category: 'Snacks', icon: '🌶️', unit: 'packets', stock: 45, reorderLevel: 20, lastModified: 'Preset' },
-            { id: 'item_classic_lays', name: 'Classic Lays', category: 'Snacks', icon: '🥔', unit: 'packets', stock: 45, reorderLevel: 20, lastModified: 'Preset' },
-            { id: 'item_paprika', name: 'Paprika Lays', category: 'Snacks', icon: '🍿', unit: 'packets', stock: 35, reorderLevel: 20, lastModified: 'Preset' },
-            { id: 'item_yogurt_herb', name: 'Yogurt & Herb Lays', category: 'Snacks', icon: '🌿', unit: 'packets', stock: 40, reorderLevel: 20, lastModified: 'Preset' },
-            { id: 'item_wavy', name: 'Wavy Lays', category: 'Snacks', icon: '🍿', unit: 'packets', stock: 35, reorderLevel: 20, lastModified: 'Preset' },
-            { id: 'item_pepsi', name: 'Pepsi', category: 'Drinks', icon: '🥤', unit: 'cans', stock: 60, reorderLevel: 20, lastModified: 'Preset' },
-            { id: 'item_sprite', name: 'Sprite', category: 'Drinks', icon: '🥤', unit: 'cans', stock: 50, reorderLevel: 20, lastModified: 'Preset' },
-            { id: 'item_water', name: 'Water', category: 'Drinks', icon: '💧', unit: 'bottles', stock: 100, reorderLevel: 20, lastModified: 'Preset' }
+            { id: 'item_tikka', name: 'Tikka', category: 'Chicken & Meat', icon: '🍗', unit: 'Packets', price: 1357, stock: 40, reorderLevel: 10 },
+            { id: 'item_fajita', name: 'Fajita', category: 'Chicken & Meat', icon: '🍗', unit: 'Packets', price: 1357, stock: 40, reorderLevel: 10 },
+            { id: 'item_peri', name: 'Peri Peri', category: 'Chicken & Meat', icon: '🍗', unit: 'Packets', price: 1357, stock: 40, reorderLevel: 10 },
+            { id: 'item_mughlai', name: 'Mughali', category: 'Chicken & Meat', icon: '🍗', unit: 'Packets', price: 1357, stock: 40, reorderLevel: 10 },
+            { id: 'item_grilled', name: 'Grilled Chicken', category: 'Chicken & Meat', icon: '🍗', unit: 'Packets', price: 1357, stock: 40, reorderLevel: 10 },
+            { id: 'item_strips', name: 'Chicken Strips', category: 'Chicken & Meat', icon: '🍗', unit: 'Packets', price: 1150, stock: 45, reorderLevel: 10 },
+            { id: 'item_pepperoni', name: 'Pepporoni', category: 'Chicken & Meat', icon: '🍕', unit: 'Packets', price: 270, stock: 35, reorderLevel: 10 },
+            { id: 'item_bread', name: 'Bread sticks', category: 'Breads & Wraps', icon: '🍞', unit: 'pcs', price: 75, stock: 120, reorderLevel: 30 },
+            { id: 'item_wrap', name: 'Wraps', category: 'Breads & Wraps', icon: '🌯', unit: 'pcs', price: 325, stock: 80, reorderLevel: 20 },
+            { id: 'item_cheese_slice', name: 'Cheese slice', category: 'Cheese & Dairy', icon: '🧀', unit: 'Packets', price: 1250, stock: 30, reorderLevel: 8 },
+            { id: 'item_cheese_block', name: 'Cheese Block', category: 'Cheese & Dairy', icon: '🧀', unit: 'Packets', price: 3230, stock: 15, reorderLevel: 4 },
+            { id: 'item_butter', name: 'Butter', category: 'Cheese & Dairy', icon: '🧀', unit: 'Packets', price: 500, stock: 10, reorderLevel: 2 },
+            { id: 'item_fries', name: 'Fries', category: 'Fries & Sides', icon: '🍟', unit: 'Packets', price: 400, stock: 60, reorderLevel: 15 },
+            { id: 'item_jalapeno', name: 'Jalapeno Can', category: 'Cans & Veggies', icon: '🌶️', unit: 'can', price: 1450, stock: 20, reorderLevel: 5 },
+            { id: 'item_olives', name: 'Olives Can', category: 'Cans & Veggies', icon: '🫒', unit: 'can', price: 2200, stock: 15, reorderLevel: 4 },
+            { id: 'item_sweetcorn', name: 'Sweet Corn Can', category: 'Cans & Veggies', icon: '🌽', unit: 'can', price: 500, stock: 25, reorderLevel: 6 },
+            { id: 'item_sauce_bbq', name: 'BBQ', category: 'Sauces & Packets', icon: '🥫', unit: 'Packets', price: 3326, stock: 10, reorderLevel: 2 },
+            { id: 'item_sauce_buffalo', name: 'Buffalo', category: 'Sauces & Packets', icon: '🥫', unit: 'Packets', price: 3058, stock: 10, reorderLevel: 2 },
+            { id: 'item_sauce_chipotle', name: 'Chipotle', category: 'Sauces & Packets', icon: '🥫', unit: 'Packets', price: 3959, stock: 10, reorderLevel: 2 },
+            { id: 'item_sauce_honey_mustard', name: 'Honey mustard', category: 'Sauces & Packets', icon: '🥫', unit: 'Packets', price: 4505, stock: 10, reorderLevel: 2 },
+            { id: 'item_sauce_mustard', name: 'Mustard', category: 'Sauces & Packets', icon: '🥫', unit: 'Packets', price: 4505, stock: 10, reorderLevel: 2 },
+            { id: 'item_sauce_ketchup', name: 'Kectup', category: 'Sauces & Packets', icon: '🥫', unit: 'Packets', price: 1618, stock: 10, reorderLevel: 2 },
+            { id: 'item_sauce_garlic_mayo', name: 'Garlic Mayo', category: 'Sauces & Packets', icon: '🥫', unit: 'Packets', price: 1800, stock: 10, reorderLevel: 2 },
+            { id: 'item_sauce_thousand', name: 'Thousand', category: 'Sauces & Packets', icon: '🥫', unit: 'Packets', price: 2916, stock: 12, reorderLevel: 2 },
+            { id: 'item_classic_lays', name: 'Classic Lays', category: 'Snacks', icon: '🥔', unit: 'Packets', price: 70, stock: 45, reorderLevel: 15 },
+            { id: 'item_paprika', name: 'Paprika', category: 'Snacks', icon: '🥔', unit: 'Packets', price: 70, stock: 35, reorderLevel: 15 },
+            { id: 'item_yogurt_herb', name: 'Youguert and herb', category: 'Snacks', icon: '🥔', unit: 'Packets', price: 70, stock: 40, reorderLevel: 15 },
+            { id: 'item_wavy_twist', name: 'Wavy twist', category: 'Snacks', icon: '🥔', unit: 'Packets', price: 70, stock: 35, reorderLevel: 15 },
+            { id: 'item_vibes', name: 'Vibes', category: 'Snacks', icon: '🥔', unit: 'pcs', price: 70, stock: 20, reorderLevel: 5 },
+            { id: 'item_masala_lays', name: 'Masala lays', category: 'Snacks', icon: '🥔', unit: 'pcs', price: 70, stock: 20, reorderLevel: 5 },
+            { id: 'item_pepsi', name: 'Pepsi', category: 'Drinks', icon: '🥤', unit: 'Packets', price: 62, stock: 60, reorderLevel: 20 },
+            { id: 'item_sprite', name: 'Sprite', category: 'Drinks', icon: '🥤', unit: 'Packets', price: 62, stock: 50, reorderLevel: 20 },
+            { id: 'item_7up', name: '7up', category: 'Drinks', icon: '🍗', unit: 'pcs', price: 62, stock: 50, reorderLevel: 20 },
+            { id: 'item_water', name: 'Water', category: 'Drinks', icon: '💧', unit: 'Packets', price: 40, stock: 100, reorderLevel: 20 }
+        ];
+
+        const DEFAULT_STAFF = [
+            { id: 'staff_amroz', name: 'Amroz', role: 'Kitchen / Staff', status: 'out', lastClockIn: '-', lastClockOut: '-' },
+            { id: 'staff_kainat', name: 'Kainat', role: 'Kitchen / Staff', status: 'out', lastClockIn: '-', lastClockOut: '-' },
+            { id: 'staff_ahmed', name: 'Ahmed', role: 'Kitchen / Staff', status: 'out', lastClockIn: '-', lastClockOut: '-' },
+            { id: 'staff_husnain', name: 'Husnain', role: 'Kitchen / Staff', status: 'out', lastClockIn: '-', lastClockOut: '-' }
         ];
 
         let state = {
             categories: DEFAULT_CATEGORIES,
             items: [],
             shifts: {},
-            orderRequests: [] // { id, itemId, itemName, icon, unit, qty, note, status: 'pending'|'ordered'|'received', time }
+            staff: DEFAULT_STAFF,
+            attendanceLogs: [],
+            currentOrderDraft: {},
+            savedOrders: []
         };
 
         let selectedShiftDate = '';
         let activeCategory = 'All';
-        let salesChartInstance = null;
+        let activeOrderCategory = 'All';
         let hasLoadedFromCloud = false;
 
         function calculateOperationalShift(dateObj = new Date()) {
@@ -929,10 +1236,26 @@
         }
 
         // ==========================================
-        // 3. CLOUD SYNC & STORAGE
+        // 3. STORAGE & PRICE REPAIR
         // ==========================================
+        function repairPricesAndCategories() {
+            // Repair any missing or 0 prices on items
+            (state.items || []).forEach(item => {
+                if (!item.price || item.price === 0) {
+                    item.price = getPriceForName(item.name, item.price);
+                }
+            });
+
+            // Ensure categories list encompasses everything
+            const catSet = new Set(DEFAULT_CATEGORIES);
+            (state.items || []).forEach(i => {
+                if (i.category) catSet.add(i.category);
+            });
+            state.categories = Array.from(catSet);
+        }
+
         function saveState() {
-            localStorage.setItem('STACKD_STORE_V7', JSON.stringify(state));
+            localStorage.setItem('STACKD_STORE_PRO_V10', JSON.stringify(state));
             if (isFirebaseReady && db) {
                 document.getElementById('sync-text').textContent = "Syncing...";
                 document.getElementById('sync-badge').className = "live-status syncing";
@@ -948,14 +1271,18 @@
 
         function loadState() {
             try {
-                const saved = localStorage.getItem('STACKD_STORE_V7');
+                const saved = localStorage.getItem('STACKD_STORE_PRO_V10');
                 if (saved) state = JSON.parse(saved);
                 if (!state.items || state.items.length === 0) state.items = JSON.parse(JSON.stringify(DEFAULT_ITEMS));
-                if (!state.categories) state.categories = [...DEFAULT_CATEGORIES];
+                if (!state.staff || state.staff.length === 0) state.staff = JSON.parse(JSON.stringify(DEFAULT_STAFF));
                 if (!state.shifts) state.shifts = {};
-                if (!state.orderRequests) state.orderRequests = [];
+                if (!state.attendanceLogs) state.attendanceLogs = [];
+                if (!state.currentOrderDraft) state.currentOrderDraft = {};
+                if (!state.savedOrders) state.savedOrders = [];
+                repairPricesAndCategories();
             } catch (e) {
-                state = { categories: [...DEFAULT_CATEGORIES], items: JSON.parse(JSON.stringify(DEFAULT_ITEMS)), shifts: {}, orderRequests: [] };
+                state = { categories: [...DEFAULT_CATEGORIES], items: JSON.parse(JSON.stringify(DEFAULT_ITEMS)), shifts: {}, staff: DEFAULT_STAFF, attendanceLogs: [], currentOrderDraft: {}, savedOrders: [] };
+                repairPricesAndCategories();
             }
 
             if (isFirebaseReady && db) {
@@ -963,11 +1290,16 @@
                     const cloudData = snapshot.val();
                     if (cloudData && cloudData.items && cloudData.items.length > 0) {
                         state = cloudData;
-                        if (!state.orderRequests) state.orderRequests = [];
-                        localStorage.setItem('STACKD_STORE_V7', JSON.stringify(state));
+                        if (!state.staff) state.staff = DEFAULT_STAFF;
+                        if (!state.attendanceLogs) state.attendanceLogs = [];
+                        if (!state.currentOrderDraft) state.currentOrderDraft = {};
+                        if (!state.savedOrders) state.savedOrders = [];
+                        repairPricesAndCategories();
+                        localStorage.setItem('STACKD_STORE_PRO_V10', JSON.stringify(state));
                         hasLoadedFromCloud = true;
                         renderPOS();
-                        renderOrderRequests();
+                        renderOrderGrid();
+                        renderStaff();
                     } else if (!hasLoadedFromCloud) {
                         saveState();
                     }
@@ -1037,166 +1369,474 @@
         }
 
         // ==========================================
-        // 4. ORDER REQUEST WORKFLOW (NEW)
+        // 4. ORDERING SYSTEM & BILL CALCULATOR
         // ==========================================
-        function populateOrderRequestDropdown() {
-            const select = document.getElementById('req-item-select');
-            select.innerHTML = '';
-            state.items.forEach(item => {
-                const opt = document.createElement('option');
-                opt.value = item.id;
-                opt.textContent = `${item.icon} ${item.name} (${item.unit})`;
-                select.appendChild(opt);
-            });
+        function adjustOrderDraftQty(itemId, change) {
+            if (!state.currentOrderDraft) state.currentOrderDraft = {};
+            const current = state.currentOrderDraft[itemId] || 0;
+            const updated = Math.max(0, current + change);
+            if (updated === 0) {
+                delete state.currentOrderDraft[itemId];
+            } else {
+                state.currentOrderDraft[itemId] = updated;
+            }
+            saveState();
+            renderOrderGrid();
         }
 
-        function submitOrderRequest() {
-            const itemId = document.getElementById('req-item-select').value;
-            const qty = parseInt(document.getElementById('req-qty-input').value, 10);
-            const note = document.getElementById('req-note-input').value.trim();
+        function setOrderDraftQtyDirect(itemId, val) {
+            if (!state.currentOrderDraft) state.currentOrderDraft = {};
+            const parsed = parseInt(val, 10);
+            if (isNaN(parsed) || parsed <= 0) {
+                delete state.currentOrderDraft[itemId];
+            } else {
+                state.currentOrderDraft[itemId] = parsed;
+            }
+            saveState();
+            renderOrderGrid();
+        }
 
+        function updateItemPrice(itemId, newPrice) {
+            const price = parseFloat(newPrice);
+            if (isNaN(price) || price < 0) return;
             const item = state.items.find(i => i.id === itemId);
-            if (!item || isNaN(qty) || qty <= 0) {
-                alert("Please select a valid item and quantity.");
+            if (item) {
+                item.price = price;
+                saveState();
+                renderOrderGrid();
+                renderPOS();
+            }
+        }
+
+        function clearCurrentOrder() {
+            state.currentOrderDraft = {};
+            saveState();
+            renderOrderGrid();
+        }
+
+        function saveTodaysOrder() {
+            const draft = state.currentOrderDraft || {};
+            const keys = Object.keys(draft);
+            if (keys.length === 0) {
+                alert("Please add items to your order first.");
                 return;
             }
 
-            const newRequest = {
-                id: 'req_' + Date.now(),
-                itemId: item.id,
-                itemName: item.name,
-                icon: item.icon,
-                unit: item.unit,
-                qty: qty,
-                note: note || 'None',
-                status: 'pending', // 'pending' | 'ordered' | 'received'
+            let totalBill = 0;
+            let itemsOrdered = [];
+
+            keys.forEach(k => {
+                const item = state.items.find(i => i.id === k);
+                if (item) {
+                    const qty = draft[k];
+                    const price = item.price || getPriceForName(item.name, 0);
+                    const subtotal = qty * price;
+                    totalBill += subtotal;
+                    itemsOrdered.push({
+                        id: item.id,
+                        name: item.name,
+                        category: item.category || 'General',
+                        qty: qty,
+                        unit: item.unit || 'pcs',
+                        price: price,
+                        subtotal: subtotal
+                    });
+                }
+            });
+
+            const newOrder = {
+                id: 'ord_' + Date.now(),
+                date: calculateOperationalShift(),
                 time: formatTimestamp(),
-                date: calculateOperationalShift()
+                totalBill: totalBill,
+                status: 'pending',
+                items: itemsOrdered
             };
 
-            if (!state.orderRequests) state.orderRequests = [];
-            state.orderRequests.unshift(newRequest);
+            if (!state.savedOrders) state.savedOrders = [];
+            state.savedOrders.unshift(newOrder);
+            state.currentOrderDraft = {};
             saveState();
-
-            document.getElementById('req-note-input').value = '';
-            document.getElementById('req-qty-input').value = '10';
-
-            renderOrderRequests();
-            alert(`Order request for ${qty} ${item.unit} of ${item.name} sent!`);
+            renderOrderGrid();
+            alert(`Order saved! Total: Rs. ${totalBill.toLocaleString()}`);
         }
 
-        function updateRequestStatus(reqId, newStatus) {
-            const req = state.orderRequests.find(r => r.id === reqId);
-            if (!req) return;
+        function markOrderReceived(orderId, event) {
+            if (event) event.stopPropagation();
+            const ord = (state.savedOrders || []).find(o => o.id === orderId);
+            if (!ord) return;
 
-            req.status = newStatus;
-
-            // If received, ask if stock should automatically increase
-            if (newStatus === 'received') {
-                if (confirm(`Stock Received! Do you want to automatically add ${req.qty} ${req.unit} to your current ${req.itemName} stock?`)) {
-                    const item = state.items.find(i => i.id === req.itemId);
-                    if (item) {
-                        item.stock += req.qty;
-                        item.lastModified = formatTimestamp();
+            if (confirm(`Mark this order as RECEIVED? Automatically add these quantities into your live stock count?`)) {
+                ord.status = 'received';
+                ord.items.forEach(ordItem => {
+                    const stockItem = state.items.find(i => i.id === ordItem.id || i.name.toLowerCase() === ordItem.name.toLowerCase());
+                    if (stockItem) {
+                        stockItem.stock += ordItem.qty;
+                        stockItem.lastModified = formatTimestamp();
                     }
-                }
-            }
-
-            saveState();
-            renderOrderRequests();
-            renderPOS();
-        }
-
-        function deleteOrderRequest(reqId) {
-            if (confirm("Delete this request from the list?")) {
-                state.orderRequests = state.orderRequests.filter(r => r.id !== reqId);
+                });
                 saveState();
-                renderOrderRequests();
+                renderOrderGrid();
+                renderPOS();
             }
         }
 
-        function renderOrderRequests() {
-            const container = document.getElementById('order-requests-list');
+        function deleteSavedOrder(orderId, event) {
+            if (event) event.stopPropagation();
+            if (confirm("Delete this saved order record?")) {
+                state.savedOrders = (state.savedOrders || []).filter(o => o.id !== orderId);
+                saveState();
+                renderOrderGrid();
+            }
+        }
+
+        function editSavedOrder(orderId, event) {
+            if (event) event.stopPropagation();
+            const ord = (state.savedOrders || []).find(o => o.id === orderId);
+            if (!ord) return;
+
+            if (confirm("Load this order back into your draft to edit it?")) {
+                state.currentOrderDraft = {};
+                ord.items.forEach(item => {
+                    state.currentOrderDraft[item.id] = item.qty;
+                });
+                saveState();
+                renderOrderGrid();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }
+
+        function toggleOrderCardExpansion(element) {
+            element.classList.toggle('expanded');
+        }
+
+        // WhatsApp Dispatch Function
+        function sendSavedOrderViaWhatsApp(orderId, event) {
+            if (event) event.stopPropagation();
+            const ord = (state.savedOrders || []).find(o => o.id === orderId);
+            if (!ord) return;
+
+            let message = `*STACKD - ORDER INVOICE*\n`;
+            message += `Shift Date: ${ord.date}\n`;
+            message += `Time: ${ord.time}\n\n`;
+
+            // Group by category
+            const grouped = {};
+            ord.items.forEach(item => {
+                const cat = item.category || 'General';
+                if (!grouped[cat]) grouped[cat] = [];
+                grouped[cat].push(item);
+            });
+
+            for (const cat in grouped) {
+                const catTotal = grouped[cat].reduce((sum, i) => sum + i.subtotal, 0);
+                message += `*--- ${cat.toUpperCase()} (Rs. ${catTotal.toLocaleString()}) ---*\n`;
+                grouped[cat].forEach(it => {
+                    message += `• ${it.name}: ${it.qty} ${it.unit} @ Rs. ${it.price} = Rs. ${it.subtotal.toLocaleString()}\n`;
+                });
+                message += `\n`;
+            }
+
+            message += `*TOTAL ESTIMATED BILL: Rs. ${ord.totalBill.toLocaleString()}*`;
+
+            const phone = "923171511108";
+            const encoded = encodeURIComponent(message);
+            window.open(`https://wa.me/${phone}?text=${encoded}`, '_blank');
+        }
+
+        function renderOrderGrid() {
+            const container = document.getElementById('order-items-grid');
             if (!container) return;
             container.innerHTML = '';
 
-            const requests = state.orderRequests || [];
-            let pendingCount = 0;
+            renderOrderCategoryTabs();
 
-            requests.forEach(r => {
-                if (r.status === 'pending') pendingCount++;
+            const draft = state.currentOrderDraft || {};
+            let totalBill = 0;
+            let totalItemsCount = 0;
+
+            Object.keys(draft).forEach(k => {
+                const item = state.items.find(i => i.id === k);
+                if (item) {
+                    const qty = draft[k];
+                    const price = item.price || getPriceForName(item.name, 0);
+                    totalBill += (qty * price);
+                    totalItemsCount += qty;
+                }
             });
 
-            // Update badges
-            const tabBadge = document.getElementById('orders-tab-badge');
-            const pendingTag = document.getElementById('pending-counter-tag');
+            document.getElementById('order-bill-total').textContent = `Rs. ${totalBill.toLocaleString()}`;
+            document.getElementById('order-items-count').textContent = `${totalItemsCount} units in draft`;
 
-            if (pendingCount > 0) {
-                tabBadge.style.display = 'inline-block';
-                tabBadge.textContent = pendingCount;
-                pendingTag.textContent = `${pendingCount} Pending`;
+            const badge = document.getElementById('orders-badge-count');
+            if (totalItemsCount > 0) {
+                badge.style.display = 'inline-block';
+                badge.textContent = totalItemsCount;
             } else {
-                tabBadge.style.display = 'none';
-                pendingTag.textContent = `0 Pending`;
+                badge.style.display = 'none';
             }
 
-            if (requests.length === 0) {
-                container.innerHTML = `<div style="text-align:center; padding:24px; color:var(--text-muted); font-size:0.85rem;">No order requests currently. All stocked up!</div>`;
-                return;
-            }
+            const filteredItems = state.items.filter(i => {
+                if (activeOrderCategory === 'All') return true;
+                return (i.category || '').toLowerCase().trim() === activeOrderCategory.toLowerCase().trim();
+            });
 
-            requests.forEach(req => {
+            filteredItems.forEach(item => {
+                const currentQty = draft[item.id] || 0;
+                const price = item.price || getPriceForName(item.name, 0);
                 const card = document.createElement('div');
-                card.className = `order-request-card ${req.status}`;
-
-                let statusBadge = '';
-                let actionButtons = '';
-
-                if (req.status === 'pending') {
-                    statusBadge = `<span class="request-status-pill pill-pending">Pending Request</span>`;
-                    actionButtons = `
-                        <button type="button" class="btn-status-act btn-act-order" onclick="updateRequestStatus('${req.id}', 'ordered')">📞 Mark as Ordered</button>
-                        <button type="button" class="btn-status-act btn-act-receive" onclick="updateRequestStatus('${req.id}', 'received')">✅ Received</button>
-                        <button type="button" class="btn-status-act btn-act-del" onclick="deleteOrderRequest('${req.id}')">✕</button>
-                    `;
-                } else if (req.status === 'ordered') {
-                    statusBadge = `<span class="request-status-pill pill-ordered">Order Placed</span>`;
-                    actionButtons = `
-                        <button type="button" class="btn-status-act btn-act-receive" onclick="updateRequestStatus('${req.id}', 'received')">✅ Mark Received</button>
-                        <button type="button" class="btn-status-act btn-act-del" onclick="deleteOrderRequest('${req.id}')">✕</button>
-                    `;
-                } else {
-                    statusBadge = `<span class="request-status-pill pill-received">Received & Stocked</span>`;
-                    actionButtons = `
-                        <button type="button" class="btn-status-act btn-act-del" style="flex:1;" onclick="deleteOrderRequest('${req.id}')">Clear Request</button>
-                    `;
-                }
+                card.className = `order-card ${currentQty > 0 ? 'selected' : ''}`;
 
                 card.innerHTML = `
-                    <div class="request-header">
-                        <div>
-                            <strong style="font-size:0.95rem;">${req.icon} ${req.itemName}</strong>
-                            <div style="font-size:0.75rem; color:var(--text-muted);">Requested: ${req.time} (${req.date})</div>
+                    <div>
+                        <div class="order-card-title">${item.icon || '📦'} ${item.name}</div>
+                        <div class="order-unit-price">
+                            <span>Rs.</span>
+                            <input type="number" class="editable-price-input" value="${price}" 
+                                onchange="updateItemPrice('${item.id}', this.value)">
+                            <span>/ ${item.unit || 'pcs'}</span>
                         </div>
-                        ${statusBadge}
                     </div>
-
-                    <div style="font-size:0.9rem; font-weight:800; color:var(--brand-primary);">
-                        Required Amount: ${req.qty} ${req.unit}
-                    </div>
-
-                    ${req.note && req.note !== 'None' ? `<div class="request-note-box">💬 Note: ${req.note}</div>` : ''}
-
-                    <div class="request-actions-row">
-                        ${actionButtons}
+                    <div class="order-qty-controller">
+                        <button type="button" class="order-qty-btn" onclick="adjustOrderDraftQty('${item.id}', -1)">-</button>
+                        <input type="number" class="order-qty-input" min="0" value="${currentQty}" 
+                            onchange="setOrderDraftQtyDirect('${item.id}', this.value)"
+                            onfocus="this.select()">
+                        <button type="button" class="order-qty-btn" onclick="adjustOrderDraftQty('${item.id}', 1)">+</button>
                     </div>
                 `;
                 container.appendChild(card);
             });
+
+            // Render Clickable Saved Orders History List
+            const historyContainer = document.getElementById('saved-orders-list');
+            historyContainer.innerHTML = '';
+            const orders = state.savedOrders || [];
+            if (orders.length === 0) {
+                historyContainer.innerHTML = `<div style="padding:10px; font-size:0.75rem; color:var(--text-muted);">No saved orders logged yet today.</div>`;
+            } else {
+                orders.forEach(ord => {
+                    const card = document.createElement('div');
+                    const isRec = ord.status === 'received';
+                    card.className = `order-history-card ${isRec ? 'received' : 'pending'}`;
+                    card.onclick = () => toggleOrderCardExpansion(card);
+
+                    // Build grouped categories
+                    const grouped = {};
+                    ord.items.forEach(it => {
+                        const cat = it.category || 'General';
+                        if (!grouped[cat]) grouped[cat] = [];
+                        grouped[cat].push(it);
+                    });
+
+                    let breakdownHtml = '';
+                    for (const cat in grouped) {
+                        const catSum = grouped[cat].reduce((sum, x) => sum + x.subtotal, 0);
+                        const itemsListHtml = grouped[cat].map(x => `
+                            <div class="category-block-item">
+                                <span>${x.name} (${x.qty} ${x.unit})</span>
+                                <span><strong>Rs. ${x.subtotal.toLocaleString()}</strong> (@ Rs. ${x.price})</span>
+                            </div>
+                        `).join('');
+
+                        breakdownHtml += `
+                            <div class="category-block">
+                                <div class="category-block-header">
+                                    <span>📁 ${cat}</span>
+                                    <span>Rs. ${catSum.toLocaleString()}</span>
+                                </div>
+                                ${itemsListHtml}
+                            </div>
+                        `;
+                    }
+
+                    const flatSummary = ord.items.map(i => `${i.name} (${i.qty})`).join(', ');
+
+                    card.innerHTML = `
+                        <div class="history-top-row">
+                            <span class="history-title-amount">Total: Rs. ${ord.totalBill.toLocaleString()}</span>
+                            <span class="status-badge ${isRec ? 'badge-received' : 'badge-pending'}">
+                                ${isRec ? '✅ RECEIVED' : '⏳ PENDING'}
+                            </span>
+                        </div>
+                        <div style="font-size:0.72rem; color:var(--text-muted); margin-bottom:4px;">${ord.time} - ${ord.date}</div>
+                        <div class="history-flat-summary">${flatSummary}</div>
+
+                        <!-- Expandable Category Breakdown -->
+                        <div class="category-breakdown-container">
+                            ${breakdownHtml}
+                        </div>
+
+                        <div class="order-card-buttons">
+                            <button type="button" class="btn-order-action btn-whatsapp" onclick="sendSavedOrderViaWhatsApp('${ord.id}', event)">💬 Share on WhatsApp</button>
+                            ${!isRec ? `<button type="button" class="btn-order-action btn-received-act" onclick="markOrderReceived('${ord.id}', event)">✅ Mark Received</button>` : ''}
+                            <button type="button" class="btn-order-action btn-edit-act" onclick="editSavedOrder('${ord.id}', event)">✏️ Edit</button>
+                            <button type="button" class="btn-order-action btn-del-act" onclick="deleteSavedOrder('${ord.id}', event)">✕ Delete</button>
+                        </div>
+                    `;
+                    historyContainer.appendChild(card);
+                });
+            }
+        }
+
+        function renderOrderCategoryTabs() {
+            const container = document.getElementById('order-category-bar');
+            if (!container) return;
+            container.innerHTML = '';
+            state.categories.forEach(cat => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = `cat-btn ${cat === activeOrderCategory ? 'active' : ''}`;
+                btn.textContent = cat;
+                btn.onclick = () => {
+                    activeOrderCategory = cat;
+                    renderOrderGrid();
+                };
+                container.appendChild(btn);
+            });
         }
 
         // ==========================================
-        // 5. MAIN RENDER
+        // 5. STAFF ATTENDANCE
+        // ==========================================
+        function handleClockIn(staffId) {
+            const staffMember = state.staff.find(s => s.id === staffId);
+            if (!staffMember) return;
+            const timeStr = formatTimestamp();
+            const dateStr = calculateOperationalShift();
+
+            staffMember.status = 'in';
+            staffMember.lastClockIn = timeStr;
+
+            if (!state.attendanceLogs) state.attendanceLogs = [];
+            state.attendanceLogs.unshift({
+                id: 'log_' + Date.now(),
+                staffId: staffMember.id,
+                staffName: staffMember.name,
+                type: 'IN',
+                clockIn: timeStr,
+                clockOut: '-',
+                date: dateStr
+            });
+
+            saveState();
+            renderStaff();
+        }
+
+        function handleClockOut(staffId) {
+            const staffMember = state.staff.find(s => s.id === staffId);
+            if (!staffMember) return;
+            const timeStr = formatTimestamp();
+            staffMember.status = 'out';
+            staffMember.lastClockOut = timeStr;
+
+            const openLog = state.attendanceLogs.find(l => l.staffId === staffId && l.clockOut === '-');
+            if (openLog) {
+                openLog.clockOut = timeStr;
+            } else {
+                state.attendanceLogs.unshift({
+                    id: 'log_' + Date.now(),
+                    staffId: staffMember.id,
+                    staffName: staffMember.name,
+                    type: 'OUT',
+                    clockIn: staffMember.lastClockIn || '-',
+                    clockOut: timeStr,
+                    date: calculateOperationalShift()
+                });
+            }
+
+            saveState();
+            renderStaff();
+        }
+
+        function confirmDeleteStaff(staffId) {
+            const staffMember = state.staff.find(s => s.id === staffId);
+            if (confirm(`Remove staff member "${staffMember.name}"?`)) {
+                state.staff = state.staff.filter(s => s.id !== staffId);
+                saveState();
+                renderStaff();
+            }
+        }
+
+        function handleAddStaff() {
+            const name = document.getElementById('new-staff-name').value.trim();
+            const role = document.getElementById('new-staff-role').value.trim();
+            if (!name) return;
+
+            const newMember = {
+                id: 'staff_' + Date.now(),
+                name: name,
+                role: role || 'Kitchen / Staff',
+                status: 'out',
+                lastClockIn: '-',
+                lastClockOut: '-'
+            };
+
+            state.staff.push(newMember);
+            saveState();
+            document.getElementById('new-staff-name').value = '';
+            closeStaffModal();
+            renderStaff();
+        }
+
+        function renderStaff() {
+            const container = document.getElementById('staff-grid');
+            if (!container) return;
+            container.innerHTML = '';
+
+            state.staff.forEach(member => {
+                const card = document.createElement('div');
+                card.className = 'staff-card';
+                const isWorking = member.status === 'in';
+
+                card.innerHTML = `
+                    <div class="staff-header">
+                        <div>
+                            <strong style="font-size:0.95rem;">${member.name}</strong>
+                            <div style="font-size:0.72rem; color:var(--text-muted);">${member.role}</div>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <span class="staff-status-pill ${isWorking ? 'pill-in' : 'pill-out'}">
+                                ${isWorking ? '● Working' : '○ Clocked Out'}
+                            </span>
+                            <button type="button" class="counter-btn" style="width:24px; height:24px; font-size:0.75rem;" onclick="confirmDeleteStaff('${member.id}')">✕</button>
+                        </div>
+                    </div>
+                    <div style="font-size:0.72rem; color:var(--text-muted);">
+                        In: <strong>${member.lastClockIn || '-'}</strong> | Out: <strong>${member.lastClockOut || '-'}</strong>
+                    </div>
+                    <div class="staff-actions">
+                        <button type="button" class="btn-clock-in" onclick="handleClockIn('${member.id}')" ${isWorking ? 'disabled style="opacity:0.5;"' : ''}>Clock IN</button>
+                        <button type="button" class="btn-clock-out" onclick="handleClockOut('${member.id}')" ${!isWorking ? 'disabled style="opacity:0.5;"' : ''}>Clock OUT</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            const tbody = document.getElementById('attendance-log-body');
+            tbody.innerHTML = '';
+            const logs = state.attendanceLogs || [];
+            if (logs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">No clock-in activity recorded yet.</td></tr>`;
+            } else {
+                logs.slice(0, 15).forEach(l => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><strong>${l.staffName}</strong></td>
+                        <td style="color:var(--accent-emerald); font-weight:800;">${l.clockIn}</td>
+                        <td style="color:var(--accent-rose); font-weight:800;">${l.clockOut}</td>
+                        <td>${l.date}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+        }
+
+        function openStaffModal() { document.getElementById('staff-modal').style.display = 'flex'; }
+        function closeStaffModal() { document.getElementById('staff-modal').style.display = 'none'; }
+
+        // ==========================================
+        // 6. INVENTORY TAB RENDERING
         // ==========================================
         function renderPOS() {
             if (!selectedShiftDate) {
@@ -1205,8 +1845,7 @@
             }
 
             renderCategoryTabs();
-            renderCategorySelect();
-            populateOrderRequestDropdown();
+            populateAddCategorySelect();
 
             const shift = getShiftData(selectedShiftDate);
             const riderStats = calculateRiderTotal(shift.deliveries);
@@ -1224,7 +1863,10 @@
             let totalUsed = 0;
             let lowCount = 0;
 
-            const filteredItems = state.items.filter(item => activeCategory === 'All' || item.category === activeCategory);
+            const filteredItems = state.items.filter(item => {
+                if (activeCategory === 'All') return true;
+                return (item.category || '').toLowerCase().trim() === activeCategory.toLowerCase().trim();
+            });
 
             state.items.forEach(item => {
                 totalStock += item.stock;
@@ -1238,6 +1880,7 @@
                 const used = shift.used[item.id] || 0;
                 const isLow = item.stock <= item.reorderLevel && item.stock > 0;
                 const isOut = item.stock === 0;
+                const price = item.price || getPriceForName(item.name, 0);
 
                 const card = document.createElement('div');
                 card.className = `card ${isLow ? 'low-stock' : ''} ${isOut ? 'out-stock' : ''}`;
@@ -1245,31 +1888,32 @@
                 card.innerHTML = `
                     <div>
                         <div class="card-header">
-                            <span class="card-icon">${item.icon || '📦'}</span>
-                            <button type="button" class="btn-del-item" onclick="confirmDeleteItem(${itemIndex})">✕</button>
+                            <span style="font-size:1.4rem;">${item.icon || '📦'}</span>
+                            <button type="button" class="counter-btn" style="width:22px; height:22px; font-size:0.75rem;" onclick="confirmDeleteItem(${itemIndex})">✕</button>
                         </div>
                         <div class="card-name">${item.name}</div>
+                        <div class="price-badge-row">
+                            <span>Cost: Rs. ${price}</span>
+                            <span>${item.unit || 'pcs'}</span>
+                        </div>
                     </div>
 
                     <div>
                         <div class="stock-box">
-                            <span>In Stock</span>
+                            <span>Stock Left</span>
                             <div>
                                 <input type="number" class="stock-input-mobile" value="${item.stock}" 
                                     onchange="updateDirectStock(${itemIndex}, this.value)">
-                                <span style="font-size:0.65rem;">${item.unit || 'pcs'}</span>
                             </div>
                         </div>
 
-                        <div class="used-label">
+                        <div style="font-size:0.72rem; font-weight:700; color:var(--text-muted); display:flex; justify-content:space-between; margin-bottom:6px;">
                             <span>Used:</span>
-                            <strong>${used} ${item.unit || 'pcs'}</strong>
+                            <strong style="color:var(--accent-emerald)">${used}</strong>
                         </div>
 
                         <div class="card-actions">
-                            <button type="button" class="btn-plus" onclick="recordUsage('${item.id}')" ${isOut ? 'disabled' : ''}>
-                                + 1
-                            </button>
+                            <button type="button" class="btn-plus" onclick="recordUsage('${item.id}')" ${isOut ? 'disabled' : ''}>+ 1</button>
                             <button type="button" class="btn-undo" onclick="undoUsage('${item.id}')">↩</button>
                         </div>
                     </div>
@@ -1298,8 +1942,8 @@
             });
         }
 
-        function renderCategorySelect() {
-            const select = document.getElementById('item-category-select');
+        function populateAddCategorySelect() {
+            const select = document.getElementById('new-item-cat');
             select.innerHTML = '';
             state.categories.filter(c => c !== 'All').forEach(cat => {
                 const opt = document.createElement('option');
@@ -1313,7 +1957,6 @@
             const item = state.items.find(i => i.id === itemId);
             if (item && item.stock > 0) {
                 item.stock -= 1;
-                item.lastModified = formatTimestamp();
                 const shift = getShiftData(selectedShiftDate);
                 shift.used[itemId] = (shift.used[itemId] || 0) + 1;
                 saveState();
@@ -1326,7 +1969,6 @@
             const shift = getShiftData(selectedShiftDate);
             if (item && shift.used[itemId] && shift.used[itemId] > 0) {
                 item.stock += 1;
-                item.lastModified = formatTimestamp();
                 shift.used[itemId] -= 1;
                 saveState();
                 renderPOS();
@@ -1336,14 +1978,13 @@
         function updateDirectStock(index, val) {
             const parsed = parseInt(val, 10);
             state.items[index].stock = isNaN(parsed) || parsed < 0 ? 0 : parsed;
-            state.items[index].lastModified = formatTimestamp();
             saveState();
             renderPOS();
         }
 
         function confirmDeleteItem(index) {
             const item = state.items[index];
-            if (confirm(`Remove "${item.name}"?`)) {
+            if (confirm(`Remove "${item.name}" from inventory?`)) {
                 state.items.splice(index, 1);
                 saveState();
                 renderPOS();
@@ -1351,31 +1992,32 @@
         }
 
         function handleAddItem() {
-            const nameEl = document.getElementById('item-name-input');
-            const catEl = document.getElementById('item-category-select');
-            const iconEl = document.getElementById('item-icon-select');
-            const unitEl = document.getElementById('item-unit-input');
-            const stockEl = document.getElementById('item-stock-input');
-            const reorderEl = document.getElementById('item-reorder-input');
+            const name = document.getElementById('new-item-name').value.trim();
+            const cat = document.getElementById('new-item-cat').value;
+            const price = parseFloat(document.getElementById('new-item-price').value) || 0;
+            const unit = document.getElementById('new-item-unit').value.trim() || 'pcs';
+            const stock = parseInt(document.getElementById('new-item-stock').value, 10) || 0;
+            const reorder = parseInt(document.getElementById('new-item-reorder').value, 10) || 10;
 
-            const name = nameEl.value.trim();
             if (!name) return;
 
             const newItem = {
                 id: 'item_' + Date.now(),
                 name: name,
-                category: catEl.value || 'General',
-                icon: iconEl.value || '📦',
-                unit: unitEl.value.trim() || 'pcs',
-                stock: parseInt(stockEl.value, 10) || 0,
-                reorderLevel: parseInt(reorderEl.value, 10) || 20,
-                lastModified: formatTimestamp()
+                category: cat || 'General',
+                icon: '📦',
+                unit: unit,
+                price: price || getPriceForName(name, 0),
+                stock: stock,
+                reorderLevel: reorder
             };
 
             state.items.unshift(newItem);
+            repairPricesAndCategories();
             saveState();
-            nameEl.value = '';
+            document.getElementById('new-item-name').value = '';
             renderPOS();
+            renderOrderGrid();
         }
 
         function openShoppingListModal() {
@@ -1388,9 +2030,9 @@
             } else {
                 lowItems.forEach(item => {
                     const row = document.createElement('div');
-                    row.className = 'modal-row';
+                    row.style.cssText = 'display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #f1f5f9; font-size:0.85rem;';
                     row.innerHTML = `
-                        <div><strong>${item.icon} ${item.name}</strong></div>
+                        <div><strong>${item.icon || '📦'} ${item.name}</strong></div>
                         <div style="color:var(--accent-rose); font-weight:800;">${item.stock} ${item.unit} left</div>
                     `;
                     modalBody.appendChild(row);
@@ -1399,9 +2041,7 @@
             document.getElementById('shopping-modal').style.display = 'flex';
         }
 
-        function closeShoppingListModal() {
-            document.getElementById('shopping-modal').style.display = 'none';
-        }
+        function closeShoppingListModal() { document.getElementById('shopping-modal').style.display = 'none'; }
 
         // Navigation Tabs
         function switchTab(tabName) {
@@ -1415,41 +2055,18 @@
             } else if (tabName === 'orders') {
                 document.getElementById('view-orders').classList.add('active');
                 document.getElementById('btn-tab-orders').classList.add('active');
-                renderOrderRequests();
+                renderOrderGrid();
+            } else if (tabName === 'staff') {
+                document.getElementById('view-staff').classList.add('active');
+                document.getElementById('btn-tab-staff').classList.add('active');
+                renderStaff();
             } else {
                 document.getElementById('view-settings').classList.add('active');
                 document.getElementById('btn-tab-settings').classList.add('active');
-                renderAnalytics();
             }
         }
 
-        function renderAnalytics() {
-            const shift = getShiftData(selectedShiftDate);
-            const labels = [];
-            const usedData = [];
-            state.items.forEach(item => {
-                labels.push(`${item.name}`);
-                usedData.push(shift.used[item.id] || 0);
-            });
-
-            const ctx = document.getElementById('salesChart').getContext('2d');
-            if (salesChartInstance) salesChartInstance.destroy();
-
-            salesChartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{ label: 'Units Used', data: usedData, backgroundColor: '#4f46e5', borderRadius: 4 }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: { y: { beginAtZero: true } },
-                    plugins: { legend: { display: false } }
-                }
-            });
-        }
-
+        // Backup and Data Export
         function exportDataBackup() {
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
             const a = document.createElement('a');
@@ -1465,28 +2082,33 @@
             reader.onload = function(e) {
                 try {
                     const parsed = JSON.parse(e.target.result);
-                    if (parsed.items && parsed.shifts) {
+                    if (parsed.items) {
                         state = parsed;
-                        if (!state.orderRequests) state.orderRequests = [];
+                        repairPricesAndCategories();
                         saveState();
-                        alert("Backup restored & synced to cloud!");
+                        alert("Backup restored & synced!");
                         renderPOS();
-                        renderOrderRequests();
+                        renderOrderGrid();
+                        renderStaff();
                     }
                 } catch (err) {
-                    alert("Error restoring backup.");
+                    alert("Error restoring backup file.");
                 }
             };
             reader.readAsText(file);
         }
 
         function exportSalesCSV() {
-            let csv = "Shift Date,Item Name,Category,Units Used\n";
+            let csv = "Shift Date,Item Name,Category,Units Used,Unit Price,Total Cost\n";
             for (const shiftKey in state.shifts) {
                 const shift = state.shifts[shiftKey];
                 for (const itemId in shift.used) {
                     const item = state.items.find(i => i.id === itemId);
-                    csv += `"${shiftKey}","${item ? item.name : itemId}","${item ? item.category : 'General'}",${shift.used[itemId]}\n`;
+                    const name = item ? item.name : itemId;
+                    const cat = item ? item.category : 'General';
+                    const pr = item ? (item.price || getPriceForName(name, 0)) : 0;
+                    const used = shift.used[itemId];
+                    csv += `"${shiftKey}","${name}","${cat}",${used},${pr},${used * pr}\n`;
                 }
             }
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -1497,15 +2119,19 @@
         }
 
         function restoreDefaults() {
-            if (confirm("Restore default menu?")) {
+            if (confirm("Reset catalog to default items and prices?")) {
                 state.categories = [...DEFAULT_CATEGORIES];
                 state.items = JSON.parse(JSON.stringify(DEFAULT_ITEMS));
+                state.staff = JSON.parse(JSON.stringify(DEFAULT_STAFF));
+                repairPricesAndCategories();
                 saveState();
                 renderPOS();
+                renderOrderGrid();
+                renderStaff();
             }
         }
 
-        // Run
+        // Initialize App
         loadState();
         setShiftToNow();
     </script>
